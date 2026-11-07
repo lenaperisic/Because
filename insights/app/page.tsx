@@ -26,7 +26,7 @@ export default function Home() {
       <div className="grid">
         {segments.map((s) => (
           <section key={s.id} className="card">
-            <h2>{s.name} <span className="pill">{s.userIds.length}</span></h2>
+            <h2><Link href={`/segment/${s.id}`}>{s.name}</Link> <span className="pill">{s.userIds.length}</span></h2>
             <p className="muted">{s.researchQuestion}</p>
             <ul className="users">
               {order(s.userIds).map((id) => (

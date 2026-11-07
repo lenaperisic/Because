@@ -29,3 +29,14 @@ ul.users li { padding: 3px 0; display: flex; justify-content: space-between; gap
 .error { color: #c5221f; font-size: 13px; }
 dl.result dt { font-weight: 600; margin-top: 8px; }
 dl.result dd { margin: 0; }
+/* Ekran grupe (app/segment/[id]) */
+.table-card { min-width: 0; }
+.table-wrap { overflow-x: auto; }
+table.people { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.people th, table.people td { text-align: left; vertical-align: top; padding: 6px; border-bottom: 1px solid var(--border); }
+table.people th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+ul.reasons { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+ul.reasons > li { padding: 10px 0; border-bottom: 1px solid var(--border); }
+ul.reasons > li:last-child { border-bottom: 0; padding-bottom: 0; }
+.quote { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--border); }

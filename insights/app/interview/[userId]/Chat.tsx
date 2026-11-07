@@ -16,7 +16,8 @@ export default function Chat({ userId, consent, previous }: Props) {
   const [error, setError] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
 
-  useEffect(() => bottom.current?.scrollIntoView({ behavior: "smooth" }), [messages, result]);
+  // Telo u zagradama: scrollIntoView u novom Chromium-u vraća Promise, a React bi ga pozvao kao cleanup i pao.
+  useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, result]);
 
   async function post<T>(url: string, body: unknown): Promise<T> {
     const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
