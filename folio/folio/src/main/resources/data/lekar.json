@@ -1,0 +1,143 @@
+{
+  "id": "lekar",
+  "name": "Dr Ana Jovanović",
+  "role": "Lekar",
+  "title": "Kardiolog · KBC Zvezdara",
+  "color": "#EA4335",
+  "usage": {
+    "read": 212, "search": 12, "annotate": 26, "sign": 186, "fill_form": 143, "ocr": 58,
+    "redact": 47, "compare": 0, "merge": 39, "compress": 6, "export_text": 0, "ai_summary": 0
+  },
+  "documents": [
+    {
+      "id": "med-doc-1", "name": "Laboratorija · M.K. · 05.11.pdf", "kind": "Nalaz", "color": "#EA4335",
+      "pages": 2, "size": "180 KB", "updated": "danas, 08:02",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Troponin i NT-proBNP su povišeni.",
+        "LDL holesterol iznad ciljne vrednosti za pacijenta sa stentom.",
+        "Kreatinin u granicama normale.",
+        "Predlog: kontrola za 4 nedelje i korekcija statina."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "KBC Zvezdara", "sub": "Služba za laboratorijsku dijagnostiku" },
+        { "type": "title", "text": "Laboratorijski nalaz" },
+        { "type": "meta", "items": [
+          { "label": "Pacijent", "value": "Milan Kovačević", "sensitive": true },
+          { "label": "JMBG", "value": "1203968710027", "sensitive": true },
+          { "label": "Broj protokola", "value": "LAB-26-114702" },
+          { "label": "Datum uzorka", "value": "5. novembar 2026" }
+        ] },
+        { "type": "table", "headers": ["Parametar", "Rezultat", "Referentne vrednosti"], "rows": [
+          ["Troponin I (hs)", "!48 ng/L", "< 34 ng/L"],
+          ["NT-proBNP", "!612 pg/mL", "< 125 pg/mL"],
+          ["LDL holesterol", "!2,9 mmol/L", "< 1,4 mmol/L"],
+          ["HDL holesterol", "1,2 mmol/L", "> 1,0 mmol/L"],
+          ["Kreatinin", "88 µmol/L", "62–106 µmol/L"],
+          ["Kalijum", "4,4 mmol/L", "3,5–5,1 mmol/L"]
+        ] },
+        { "type": "p", "text": "Vrednosti označene crvenom su van referentnog opsega. Nalaz je potrebno overiti potpisom ordinirajućeg lekara." },
+        { "type": "signature", "signers": ["Dr Ana Jovanović, kardiolog"] }
+      ]
+    },
+    {
+      "id": "med-doc-2", "name": "Uput · S.R. · kardiohirurgija.pdf", "kind": "Formular", "color": "#FA7B17",
+      "pages": 1, "size": "96 KB", "updated": "danas, 10:41",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Uput za konzilijarni pregled kardiohirurga.",
+        "Dijagnoza I25.1, trosudovna koronarna bolest.",
+        "Hitnost: redovan, u roku od 30 dana."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Republički fond za zdravstveno osiguranje", "sub": "Obrazac OZ-3" },
+        { "type": "title", "text": "Uput za specijalističko-konsultativni pregled" },
+        { "type": "form", "fields": [
+          { "label": "Ime i prezime pacijenta", "value": "Stefan Ristić" },
+          { "label": "LBO", "value": "08812774519" },
+          { "label": "Dijagnoza (MKB-10)", "value": "I25.1 · Aterosklerotska bolest srca" },
+          { "label": "Upućuje se na", "value": "Kardiohirurgija, konzilijarni pregled" },
+          { "label": "Razlog upućivanja", "value": "Trosudovna koronarna bolest, procena za CABG" },
+          { "label": "Hitnost", "value": "Redovan · 30 dana" }
+        ] },
+        { "type": "signature", "signers": ["Lekar koji upućuje"] }
+      ]
+    },
+    {
+      "id": "med-doc-3", "name": "Stari nalaz · Z.Đ. (sken).pdf", "kind": "Sken", "color": "#9AA0A6",
+      "pages": 4, "size": "6,2 MB", "updated": "juče, 14:20",
+      "scanned": true, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Ehokardiografski nalaz iz 2019. godine.",
+        "Ejekciona frakcija tada 55%, bez značajnih valvularnih mana.",
+        "Korisno za poređenje sa sadašnjim nalazom (EF 38%)."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Dom zdravlja Požarevac", "sub": "Kardiološka ambulanta · 2019" },
+        { "type": "title", "text": "Ehokardiografski nalaz" },
+        { "type": "meta", "items": [
+          { "label": "Pacijent", "value": "Zoran Đorđević", "sensitive": true },
+          { "label": "Datum", "value": "14. mart 2019" }
+        ] },
+        { "type": "p", "text": "Leva komora normalnih dimenzija, očuvane globalne sistolne funkcije, EF 55%. Bez segmentnih poremećaja kinetike. Valvule bez značajnih mana." },
+        { "type": "p", "text": "Zaključak: uredan ehokardiografski nalaz. Kontrola po potrebi." }
+      ]
+    },
+    {
+      "id": "med-doc-4", "name": "Otpusna lista · D.P.pdf", "kind": "Izveštaj", "color": "#A142F4",
+      "pages": 3, "size": "210 KB", "updated": "pre 2 dana",
+      "scanned": false, "signed": true, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Hospitalizacija 5 dana zbog dekompenzacije srčane slabosti.",
+        "Otpust u stabilnom stanju, terapija korigovana.",
+        "Kontrola u kardiološkoj ambulanti za 2 nedelje."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "KBC Zvezdara", "sub": "Klinika za kardiologiju" },
+        { "type": "title", "text": "Otpusna lista" },
+        { "type": "meta", "items": [
+          { "label": "Pacijent", "value": "Dragan Pavlović", "sensitive": true },
+          { "label": "Broj istorije", "value": "IB-26-04412" },
+          { "label": "Prijem", "value": "1. novembar 2026" },
+          { "label": "Otpust", "value": "5. novembar 2026" }
+        ] },
+        { "type": "h2", "text": "Dijagnoza" },
+        { "type": "p", "text": "I50.0 Kongestivna srčana slabost, dekompenzacija. Arterijska hipertenzija." },
+        { "type": "h2", "text": "Terapija na otpustu" },
+        { "type": "table", "headers": ["Lek", "Doza", "Režim"], "rows": [
+          ["Sakubitril/valsartan", "49/51 mg", "2 x 1"],
+          ["Bisoprolol", "5 mg", "1 x 1"],
+          ["Spironolakton", "25 mg", "1 x 1"],
+          ["Furosemid", "40 mg", "1 x 1 ujutru"]
+        ] },
+        { "type": "signature", "signers": ["Dr Ana Jovanović, kardiolog"] }
+      ]
+    },
+    {
+      "id": "med-doc-5", "name": "Smernice ESC 2026 · AF.pdf", "kind": "Smernice", "color": "#4285F4",
+      "pages": 88, "size": "12,4 MB", "updated": "1. nov",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Nove preporuke za lečenje atrijalne fibrilacije.",
+        "Ranija kontrola ritma kod simptomatskih pacijenata.",
+        "Ažurirani kriterijumi za antikoagulantnu terapiju."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "European Society of Cardiology", "sub": "Smernice za kliničku praksu" },
+        { "type": "title", "text": "Atrijalna fibrilacija · smernice 2026" },
+        { "type": "h2", "text": "Ključne preporuke" },
+        { "type": "p", "text": "Kontrolu ritma treba razmotriti rano kod pacijenata sa simptomima, nezavisno od trajanja aritmije." },
+        { "type": "table", "headers": ["Preporuka", "Klasa", "Nivo"], "rows": [
+          ["Rana kontrola ritma kod simptomatskih", "I", "A"],
+          ["Antikoagulacija kod CHA2DS2-VA ≥ 2", "I", "B"],
+          ["Ablacija kao prva linija kod mlađih", "IIa", "B"]
+        ] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+# Insights · AI intervjui na PostHog podacima
+
+Faza 1 iz `../plan-ai-intervjui.md` (Checkpoint 1): **PostHog događaji → profil sa činjenicama → grupa → AI intervju → sačuvan rezultat.**
+
+## Podešavanje
+
+```
+npm install
+cp .env.example .env.local   # popunite ključeve
+```
+
+| Promenljiva | Čemu služi |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | Claude intervju (`INTERVIEW_MODEL`, podrazumevano `claude-opus-5-5`) |
+| `POSTHOG_KEY`, `POSTHOG_HOST` | Project token (`phc_...`): seed (i kasnije upis nazad) |
+| `POSTHOG_PERSONAL_KEY`, `POSTHOG_PROJECT_ID`, `POSTHOG_API_HOST` | Personal key sa **Query Read**: čitanje događaja |
+
+## Tok
+
+```
+npm run seed                      # ~200 osoba, ~100k događaja za 30 dana -> PostHog + data/seed-backup.json
+npm run seed -- --dry-run         # samo lokalna rezerva, bez PostHoga
+npm run fetch                     # HogQL -> data/cache.json, ispiše broj ljudi po grupi
+npm run fetch -- --local          # isto, nad postojećim kešom ili seed rezervom
+npm run facts -- seed_lekar_017   # činjenice sa ID-jevima i grupa za jednu osobu
+npm run dev                       # http://localhost:3000
+```
+
+Demo uživo: `POSTHOG_KEY=phc_... java -jar ../folio/folio/folio.jar --profile lekar --user "Ana Zirij"` šalje događaje kao osoba `folio_ana_zirij`. Zatim „Osveži iz PostHoga“ na početnoj, ili direktno `/interview/folio_ana_zirij` (ako osobe nema u kešu, stranica sama povuče ponovo).
+
+Bez PostHog ključeva aplikacija radi nad `data/seed-backup.json`.
+
+## Delovi
+
+| Fajl | Šta radi |
+| --- | --- |
+| `lib/types.ts` | Ugovor između delova (`Fact`, `Profile`, `Segment`, `InterviewResult`). Ne menjati bez dogovora. |
+| `lib/posthog.ts` | 3 HogQL upita (upotreba po alatu, osoba, današnja aktivnost), jedan po jedan, keš u `data/cache.json` |
+| `lib/facts.ts` | Činjenice sa ID-jevima; računa ih kod, ne model |
+| `lib/segments.ts` | Pravila za 5 grupa po ponašanju |
+| `lib/interview.ts` | System prompt, chat poziv, strukturisan rezultat (structured outputs + zod) |
+| `lib/store.ts` | Rezultati u `data/results/<userId>.json` |
+| `app/interview/[userId]` | Chat ekran + činjenice sa strane |
+| `app/api/*` | `refresh`, `segments`, `profile/[userId]`, `interview`, `interview/finish` |
+
+### Pravila za grupe
+
+1. **Probali AI pa odustali:** AI sažetak 1–2 puta, poslednji put pre više od 14 dana (preseca uloge).
+2. **Novi i neaktivni:** < 10 upotreba ili prvi dolazak u poslednjih 7 dana, *a nema dominantnog obrasca* (> 50%). Nova osoba koja već jasno potpisuje (demo uživo) ide u Potpisivače.
+3. Inače grupa sa najvećim udelom: **Potpisivači** (potpis + formular), **Čitači** (pretraga + izvoz u tekst), **Usklađenost** (zacrnjivanje + poređenje).
+
+Seed daje: Potpisivači 59, Čitači 43, Usklađenost 58, Probali AI 21 (developer 15, bankar 3, lekar 3), Novi 19.
+
+### Intervju
+
+- Prva poruka je fiksna: AI se predstavlja i traži pristanak.
+- Model sme da pominje samo činjenice iz liste; najviše 6 pitanja, pa se razgovor završava (sistemska poruka usred razgovora, bez promene system prompta).
+- Na kraju poseban poziv vraća `InterviewResult`; `factsUsed` se filtrira na ID-jeve koji stvarno postoje.
+- `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`): ako model odbije zahtev, API ga sam ponovi na drugom modelu.
+
+## Sledeće (faza 2)
+
+Claude imenuje grupe, upis rezultata nazad u PostHog (`ai_interview_completed` + `$set`), dashboard, simulirani intervjui i sinteza po grupi.

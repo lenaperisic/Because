@@ -1,0 +1,171 @@
+{
+  "id": "developer",
+  "name": "Marko Petrović",
+  "role": "Developer",
+  "title": "Senior backend developer · Nimbus Labs",
+  "color": "#4285F4",
+  "usage": {
+    "read": 164, "search": 97, "annotate": 18, "sign": 1, "fill_form": 0, "ocr": 0,
+    "redact": 0, "compare": 2, "merge": 3, "compress": 4, "export_text": 41, "ai_summary": 1
+  },
+  "documents": [
+    {
+      "id": "dev-doc-1", "name": "API v2 specifikacija.pdf", "kind": "Specifikacija", "color": "#4285F4",
+      "pages": 42, "size": "2,4 MB", "updated": "danas, 09:12",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Verzija 2 prelazi sa paginacije po stranama (page) na kursore (cursor).",
+        "Polje customer_name je preimenovano u customer_full_name.",
+        "Svi zahtevi moraju da šalju header X-Api-Version: 2.",
+        "Verzija 1 se gasi 31. marta 2027."
+      ],
+      "changes": [
+        { "type": "-", "text": "GET /v1/orders?page=2&per_page=50" },
+        { "type": "+", "text": "GET /v2/orders?cursor=eyJpZCI6NTB9&limit=50" },
+        { "type": "-", "text": "\"customer_name\": \"Ana Ilić\"" },
+        { "type": "+", "text": "\"customer_full_name\": \"Ana Ilić\"" }
+      ],
+      "blocks": [
+        { "type": "letterhead", "org": "Nimbus Labs", "sub": "Interna dokumentacija · Platform tim" },
+        { "type": "title", "text": "Orders API v2 · Specifikacija" },
+        { "type": "meta", "items": [
+          { "label": "Verzija", "value": "2.0.0-rc3" },
+          { "label": "Status", "value": "Za review" },
+          { "label": "Autor", "value": "Marko Petrović" },
+          { "label": "Ažurirano", "value": "7. novembar 2026" }
+        ] },
+        { "type": "h2", "text": "1. Paginacija" },
+        { "type": "p", "text": "Verzija 2 koristi paginaciju kursorom. Odgovor sadrži next_cursor, a klijent ga šalje u sledećem zahtevu dok ne dobije null. Parametri page i per_page više nisu podržani." },
+        { "type": "code", "lines": [
+          "GET /v2/orders?cursor=eyJpZCI6NTB9&limit=50",
+          "X-Api-Version: 2",
+          "",
+          "200 OK",
+          "{ \"data\": [ ... ], \"next_cursor\": \"eyJpZCI6MTAwfQ\" }"
+        ] },
+        { "type": "h2", "text": "2. Promene polja" },
+        { "type": "table", "headers": ["v1", "v2", "Napomena"], "rows": [
+          ["customer_name", "customer_full_name", "Ime i prezime zajedno"],
+          ["amount", "amount_minor", "!Sada u parama"],
+          ["created", "created_at", "ISO 8601 sa zonom"]
+        ] },
+        { "type": "p", "text": "Polje amount_minor menja jedinicu. Klijenti koji samo preimenuju polje naplaćivaće 100 puta pogrešan iznos." }
+      ]
+    },
+    {
+      "id": "dev-doc-2", "name": "Arhitektura naplate (RFC).pdf", "kind": "RFC", "color": "#A142F4",
+      "pages": 18, "size": "1,1 MB", "updated": "juče, 17:40",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Predlog da naplata pređe na event sourcing.",
+        "Glavni argument: potpuna istorija promena i lakše revizije.",
+        "Rizik: složenija migracija postojećih podataka.",
+        "Odluka se donosi na sastanku o arhitekturi u sredu."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Nimbus Labs", "sub": "RFC-0142 · Arhitektura" },
+        { "type": "title", "text": "Event sourcing za servis naplate" },
+        { "type": "meta", "items": [
+          { "label": "Autori", "value": "I. Kostić, M. Petrović" },
+          { "label": "Status", "value": "Predlog" },
+          { "label": "Recenzenti", "value": "L. Đorđević, P. Ristić" },
+          { "label": "Rok za komentare", "value": "11. novembar" }
+        ] },
+        { "type": "h2", "text": "Kontekst" },
+        { "type": "p", "text": "Servis naplate danas čuva samo trenutno stanje računa. Kad klijent ospori iznos, rekonstrukcija istorije traži ručno čitanje logova i traje danima." },
+        { "type": "h2", "text": "Predlog" },
+        { "type": "p", "text": "Svaka promena postaje nepromenljiv događaj u logu. Trenutno stanje računa se gradi iz događaja, a projekcije se osvežavaju asinhrono." },
+        { "type": "code", "lines": [
+          "InvoiceCreated   { id, customer, lines }",
+          "LineAdjusted     { id, line, delta_minor }",
+          "InvoicePaid      { id, paid_at, method }"
+        ] },
+        { "type": "h2", "text": "Rizici" },
+        { "type": "p", "text": "Migracija postojećih 2,3 miliona računa i dvostruko upisivanje tokom prelaznog perioda." }
+      ]
+    },
+    {
+      "id": "dev-doc-3", "name": "AWS faktura · oktobar.pdf", "kind": "Faktura", "color": "#FA7B17",
+      "pages": 3, "size": "240 KB", "updated": "3. nov",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Ukupno 4.812 USD za oktobar, 9% više nego u septembru.",
+        "Najveći trošak: RDS baze (1.940 USD).",
+        "Rast dolazi od novog staging okruženja."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Amazon Web Services", "sub": "Faktura · Account 4471-2290-118" },
+        { "type": "title", "text": "Faktura za oktobar 2026" },
+        { "type": "meta", "items": [
+          { "label": "Kupac", "value": "Nimbus Labs d.o.o." },
+          { "label": "Period", "value": "1–31. oktobar 2026" },
+          { "label": "Broj fakture", "value": "EUINRS26-118402" },
+          { "label": "Rok plaćanja", "value": "15. novembar 2026" }
+        ] },
+        { "type": "table", "headers": ["Servis", "Upotreba", "Iznos (USD)"], "rows": [
+          ["Amazon RDS", "4 instance", "1.940,22"],
+          ["Amazon EC2", "12 instanci", "1.402,80"],
+          ["Amazon S3", "18,4 TB", "612,10"],
+          ["CloudFront", "41 TB izlaz", "534,66"],
+          ["Ostalo", "", "322,40"],
+          ["Ukupno", "", "4.812,18"]
+        ] }
+      ]
+    },
+    {
+      "id": "dev-doc-4", "name": "Ugovor o radu · aneks.pdf", "kind": "Ugovor", "color": "#34A853",
+      "pages": 6, "size": "380 KB", "updated": "28. okt",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Aneks menja zvanje u Senior backend developer.",
+        "Nova bruto zarada važi od 1. novembra 2026.",
+        "Ostale odredbe ugovora ostaju iste."
+      ],
+      "changes": [
+        { "type": "-", "text": "Zvanje: Backend developer" },
+        { "type": "+", "text": "Zvanje: Senior backend developer" }
+      ],
+      "blocks": [
+        { "type": "letterhead", "org": "Nimbus Labs d.o.o.", "sub": "Ljudski resursi" },
+        { "type": "title", "text": "Aneks II ugovora o radu" },
+        { "type": "meta", "items": [
+          { "label": "Zaposleni", "value": "Marko Petrović", "sensitive": true },
+          { "label": "JMBG", "value": "0505991710018", "sensitive": true },
+          { "label": "Datum", "value": "28. oktobar 2026" },
+          { "label": "Broj", "value": "HR-2026-0388" }
+        ] },
+        { "type": "h2", "text": "Član 1." },
+        { "type": "p", "text": "Menja se član 3. ugovora o radu tako da zaposleni od 1. novembra 2026. obavlja poslove na radnom mestu Senior backend developer." },
+        { "type": "h2", "text": "Član 2." },
+        { "type": "p", "text": "Osnovna bruto zarada utvrđuje se u skladu sa internim pravilnikom o zaradama. Ostale odredbe ugovora ostaju neizmenjene." },
+        { "type": "signature", "signers": ["Za poslodavca", "Zaposleni"] }
+      ]
+    },
+    {
+      "id": "dev-doc-5", "name": "PostgreSQL 17 · release notes.pdf", "kind": "Dokumentacija", "color": "#12B5CB",
+      "pages": 64, "size": "3,8 MB", "updated": "20. okt",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Brži VACUUM i manja potrošnja memorije.",
+        "Inkrementalni backup kroz pg_basebackup.",
+        "JSON_TABLE i nove SQL/JSON funkcije."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "PostgreSQL Global Development Group", "sub": "Release notes" },
+        { "type": "title", "text": "PostgreSQL 17 · Šta je novo" },
+        { "type": "h2", "text": "Performanse" },
+        { "type": "p", "text": "Nova struktura memorije za VACUUM troši do 20 puta manje memorije, a upiti sa IN listama na B-tree indeksima su brži." },
+        { "type": "h2", "text": "Rezervne kopije" },
+        { "type": "code", "lines": [
+          "pg_basebackup --incremental=backup_manifest -D /backup/inc1",
+          "pg_combinebackup /backup/full /backup/inc1 -o /restore"
+        ] },
+        { "type": "h2", "text": "SQL/JSON" },
+        { "type": "p", "text": "Funkcija JSON_TABLE pretvara JSON u redove i kolone, pa se JSON dokumenti mogu spajati sa običnim tabelama." }
+      ]
+    }
+  ]
+}

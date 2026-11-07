@@ -1,0 +1,139 @@
+{
+  "id": "bankar",
+  "name": "Jelena Marković",
+  "role": "Bankar",
+  "title": "Menadžer za korporativne klijente · Delta Banka",
+  "color": "#0F9D58",
+  "usage": {
+    "read": 238, "search": 61, "annotate": 74, "sign": 92, "fill_form": 38, "ocr": 44,
+    "redact": 121, "compare": 87, "merge": 52, "compress": 19, "export_text": 3, "ai_summary": 14
+  },
+  "documents": [
+    {
+      "id": "bnk-doc-1", "name": "Ugovor o kreditu · Dunav Logistika (v3).pdf", "kind": "Ugovor", "color": "#4285F4",
+      "pages": 24, "size": "1,6 MB", "updated": "danas, 11:05",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Investicioni kredit od 4.200.000 EUR na 7 godina.",
+        "Kamata: 3M EURIBOR + 2,4%, grejs period 12 meseci.",
+        "Sredstva obezbeđenja: hipoteka na skladištu i menice.",
+        "Verzija 3 menja kovenant o zaduženosti i rok prvog povlačenja."
+      ],
+      "changes": [
+        { "type": "-", "text": "Odnos neto duga i EBITDA ne sme preći 3,0x." },
+        { "type": "+", "text": "Odnos neto duga i EBITDA ne sme preći 3,5x." },
+        { "type": "-", "text": "Prvo povlačenje najkasnije do 31. decembra 2026." },
+        { "type": "+", "text": "Prvo povlačenje najkasnije do 31. marta 2027." }
+      ],
+      "blocks": [
+        { "type": "letterhead", "org": "Delta Banka a.d. Beograd", "sub": "Sektor korporativnog bankarstva" },
+        { "type": "title", "text": "Ugovor o investicionom kreditu br. 2026-0412" },
+        { "type": "meta", "items": [
+          { "label": "Korisnik kredita", "value": "Dunav Logistika d.o.o." },
+          { "label": "Matični broj", "value": "21455870" },
+          { "label": "Iznos", "value": "4.200.000,00 EUR" },
+          { "label": "Rok otplate", "value": "84 meseca" }
+        ] },
+        { "type": "h2", "text": "Član 4. Kamata" },
+        { "type": "p", "text": "Na iskorišćeni iznos kredita obračunava se promenljiva kamatna stopa u visini 3M EURIBOR uvećana za maržu od 2,4% godišnje." },
+        { "type": "h2", "text": "Član 9. Finansijski kovenanti" },
+        { "type": "p", "text": "Korisnik kredita se obavezuje da tokom trajanja ugovora odnos neto duga i EBITDA ne pređe 3,5x, mereno na kraju svake poslovne godine." },
+        { "type": "signature", "signers": ["Za Banku", "Za Korisnika kredita"] }
+      ]
+    },
+    {
+      "id": "bnk-doc-2", "name": "KYC · Tech Hub d.o.o.pdf", "kind": "Formular", "color": "#FA7B17",
+      "pages": 5, "size": "420 KB", "updated": "juče, 16:12",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Upitnik za poznavanje klijenta za novo pravno lice.",
+        "Stvarni vlasnik: Ivana Radić, 100% udela.",
+        "Klijent nije funkcioner, rizik procenjen kao nizak."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Delta Banka a.d. Beograd", "sub": "Služba za usklađenost poslovanja" },
+        { "type": "title", "text": "Upitnik za poznavanje klijenta (KYC)" },
+        { "type": "form", "fields": [
+          { "label": "Poslovno ime", "value": "Tech Hub d.o.o. Beograd" },
+          { "label": "Matični broj / PIB", "value": "21877012 / 113402871" },
+          { "label": "Stvarni vlasnik", "value": "Ivana Radić · 100%" },
+          { "label": "Pretežna delatnost", "value": "6201 · Računarsko programiranje" },
+          { "label": "Očekivani mesečni promet", "value": "200.000 – 500.000 EUR" },
+          { "label": "Funkcioner (PEP)", "value": "Ne" }
+        ] },
+        { "type": "signature", "signers": ["Ovlašćeni službenik banke"] }
+      ]
+    },
+    {
+      "id": "bnk-doc-3", "name": "Bilans stanja · Metal Pro 2025.pdf", "kind": "Finansije", "color": "#12B5CB",
+      "pages": 8, "size": "760 KB", "updated": "4. nov",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Ukupna aktiva 18,4 miliona EUR, rast 12% u odnosu na 2024.",
+        "Kratkoročne obaveze rastu brže od obrtne imovine.",
+        "Neto dug / EBITDA iznosi 2,8x, ispod limita od 3,5x."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Metal Pro d.o.o. Novi Sad", "sub": "Finansijski izveštaj za 2025." },
+        { "type": "title", "text": "Bilans stanja na dan 31.12.2025." },
+        { "type": "table", "headers": ["Pozicija", "2025 (000 EUR)", "2024 (000 EUR)"], "rows": [
+          ["Stalna imovina", "11.240", "10.410"],
+          ["Obrtna imovina", "7.180", "6.020"],
+          ["Ukupna aktiva", "18.420", "16.430"],
+          ["Kapital", "7.960", "7.310"],
+          ["Dugoročne obaveze", "6.110", "5.880"],
+          ["Kratkoročne obaveze", "!4.350", "3.240"]
+        ] },
+        { "type": "p", "text": "Kratkoročne obaveze su porasle za 34%, prvenstveno zbog dobavljača sirovina. Preporučuje se provera ročne usklađenosti pre odobrenja novog kredita." }
+      ]
+    },
+    {
+      "id": "bnk-doc-4", "name": "Lična karta · direktor (sken).pdf", "kind": "Sken", "color": "#9AA0A6",
+      "pages": 1, "size": "2,9 MB", "updated": "juče, 15:58",
+      "scanned": true, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Skenirana lična karta zakonskog zastupnika.",
+        "Dokument važi do 2031. godine.",
+        "Podaci se poklapaju sa podacima iz APR-a."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Republika Srbija", "sub": "Lična karta · sken za dosije klijenta" },
+        { "type": "title", "text": "Lična karta" },
+        { "type": "meta", "items": [
+          { "label": "Ime i prezime", "value": "Nenad Jović", "sensitive": true },
+          { "label": "JMBG", "value": "1707979800014", "sensitive": true },
+          { "label": "Broj dokumenta", "value": "009412778", "sensitive": true },
+          { "label": "Važi do", "value": "12. maj 2031" }
+        ] },
+        { "type": "p", "text": "Kopija je napravljena za potrebe identifikacije zakonskog zastupnika klijenta u skladu sa Zakonom o sprečavanju pranja novca." }
+      ]
+    },
+    {
+      "id": "bnk-doc-5", "name": "Kreditni predlog za odbor.pdf", "kind": "Izveštaj", "color": "#A142F4",
+      "pages": 12, "size": "1,2 MB", "updated": "3. nov",
+      "scanned": false, "signed": true, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Predlog odobrenja kredita Dunav Logistika, 4,2 miliona EUR.",
+        "Klijent sa bankom posluje od 2014, bez kašnjenja.",
+        "Preporuka: odobriti uz hipoteku i kovenant 3,5x."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Delta Banka a.d. Beograd", "sub": "Kreditni odbor · sednica 10.11.2026" },
+        { "type": "title", "text": "Predlog za odobrenje kredita" },
+        { "type": "meta", "items": [
+          { "label": "Klijent", "value": "Dunav Logistika d.o.o." },
+          { "label": "Iznos", "value": "4.200.000 EUR" },
+          { "label": "Rejting", "value": "B+" },
+          { "label": "Predlagač", "value": "Jelena Marković" }
+        ] },
+        { "type": "h2", "text": "Obrazloženje" },
+        { "type": "p", "text": "Klijent posluje sa bankom od 2014. godine bez ijednog kašnjenja. Kredit finansira izgradnju novog skladišta u Šimanovcima, čime se kapacitet povećava za 40%." },
+        { "type": "signature", "signers": ["Menadžer za korporativne klijente"] }
+      ]
+    }
+  ]
+}

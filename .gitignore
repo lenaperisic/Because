@@ -1,0 +1,7 @@
+node_modules/
+.next/
+.env.local
+.idea/
+*.iml
+folio/folio/build/
+folio-data/

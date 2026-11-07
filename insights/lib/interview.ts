@@ -1,0 +1,158 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { z } from "zod";
+import { SEGMENT_DEFS, type SegmentId } from "./segments";
+import type { ChatMessage, InterviewResult, Profile } from "./types";
+
+// Jedini deo gde AI odlučuje. Sve činjenice o korisniku su izračunate pre toga (lib/facts.ts),
+// a model sme da se poziva samo na njih.
+
+const MODEL = process.env.INTERVIEW_MODEL || "claude-opus-5-5";
+export const MAX_QUESTIONS = 6;
+/** Model završava razgovor ovim markerom; server ga skida pre slanja korisniku. */
+const END = "[KRAJ]";
+
+/** Fiksna prva poruka: AI se predstavlja i traži pristanak (bez čekanja na model). */
+export const CONSENT_MESSAGE =
+  "Zdravo! Ja sam AI asistent i vodim kratak razgovor (2–3 minuta) o tome kako koristite Folio. " +
+  "Pitaću vas samo o onome što ste zaista radili u alatu, a odgovori pomažu timu da ga poboljša. " +
+  "Možete prekinuti kad god želite. Da li pristajete da počnemo?";
+
+/** Prazna korisnička poruka pre pozdrava, jer razgovor sa API-jem počinje korisnikom. */
+const OPENING_USER_TURN = "(Korisnik je otvorio stranicu intervjua.)";
+
+let client: Anthropic | null = null;
+const anthropic = () => (client ??= new Anthropic());
+
+function segmentOf(profile: Profile) {
+  return SEGMENT_DEFS[profile.segmentId as SegmentId] ?? SEGMENT_DEFS.novi;
+}
+
+export function systemPrompt(profile: Profile): string {
+  const seg = segmentOf(profile);
+  const facts = profile.facts.map((f) => `- [${f.id}] ${f.text}`).join("\n");
+  return `Ti si AI istraživač korisničkog iskustva za Folio, PDF alat. Vodiš kratak intervju sa jednim korisnikom, na srpskom jeziku (latinica), persiraš ga („vi“).
+
+## Cilj istraživanja
+Korisnik pripada grupi „${seg.name}“ (${seg.why}).
+Istraživačko pitanje za ovu grupu: ${seg.researchQuestion}
+Želimo da razumemo ZAŠTO se korisnik ponaša ovako, njegovim rečima.
+
+## Činjenice o korisniku
+Ove činjenice je izračunao kod iz stvarnih događaja u alatu (poslednjih 30 dana). Pouzdane su.
+${facts}
+
+## Pravila o činjenicama
+- O tome šta je korisnik radio govoriš ISKLJUČIVO na osnovu gornjih činjenica. Ne izmišljaj alate, brojeve, dokumente ni datume koji tu ne piše.
+- Ne pominji ID-jeve činjenica korisniku; govori prirodno („Danas ste potpisali nalaz...“).
+- Ako korisnik kaže nešto što se ne slaže sa činjenicama, ne raspravljaj se: zahvali i pitaj ga da objasni svojim rečima.
+- Ne pominji grupu ni kako je korisnik razvrstan.
+
+## Pravila intervjua
+- Prvu poruku (predstavljanje i pristanak) već si poslao. Ako korisnik ne pristane, ljubazno zahvali i završi.
+- Postavljaj jedno pitanje po poruci. Poruke su kratke: 1 do 3 rečenice.
+- Prvo pitanje poveži sa konkretnom činjenicom, najbolje sa nečim što je uradio danas ili nečim što nikad ne koristi, a vezano je za istraživačko pitanje.
+- Pitanja su otvorena i nisu sugestivna: ne nudi razlog umesto korisnika („Da li je to zato što...?“ nije dozvoljeno).
+- Kad je odgovor nejasan ili kratak, postavi jedno dodatno pitanje („Možete li da opišete poslednji put kad...?“).
+- Najviše ${MAX_QUESTIONS} pitanja ukupno. Kad dobiješ glavni razlog i bar jedan konkretan primer, ili kad potrošiš pitanja, završi.
+- Kraj: zahvali, u jednoj rečenici ponovi šta si razumeo kao glavni razlog, i završi poruku tačno oznakom ${END}.`;
+}
+
+/** Istorija za API: početni korisnički potez + fiksni pozdrav + razgovor. */
+function apiMessages(history: ChatMessage[]): Anthropic.Beta.BetaMessageParam[] {
+  return [
+    { role: "user", content: OPENING_USER_TURN },
+    { role: "assistant", content: CONSENT_MESSAGE },
+    ...history.map((m) => ({ role: m.role, content: m.content })),
+  ];
+}
+
+/** Koliko je pitanja AI postavio posle pozdrava. */
+export function questionsAsked(history: ChatMessage[]) {
+  return history.filter((m) => m.role === "assistant").length;
+}
+
+export type Reply = { reply: string; done: boolean };
+
+/**
+ * Sledeća poruka intervjuera. `history` počinje prvim odgovorom korisnika na pozdrav
+ * (pozdrav sam nije u istoriji) i završava se porukom korisnika.
+ */
+export async function nextReply(profile: Profile, history: ChatMessage[]): Promise<Reply> {
+  const asked = questionsAsked(history);
+  const messages = apiMessages(history);
+  if (asked >= MAX_QUESTIONS) {
+    // Instrukcija operatera usred razgovora: ne menja system prompt, pa keš ostaje.
+    messages.push({ role: "system", content: `Postavio si ${asked} pitanja. Sada završi intervju po pravilu za kraj, bez novih pitanja.` });
+  }
+  const res = await anthropic().beta.messages.create({
+    model: MODEL,
+    max_tokens: 4000,
+    // Chat: niska latencija je važnija od dubokog razmišljanja.
+    output_config: { effort: "low" },
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    system: [{ type: "text", text: systemPrompt(profile), cache_control: { type: "ephemeral" } }],
+    messages,
+  });
+  if (res.stop_reason === "refusal") {
+    return { reply: "Izvinite, ne mogu da nastavim ovaj razgovor. Hvala vam na vremenu!", done: true };
+  }
+  const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
+  const done = text.includes(END) || asked >= MAX_QUESTIONS;
+  return { reply: text.replace(END, "").trim(), done };
+}
+
+// ---- strukturisan rezultat ----
+
+const ResultSchema = z.object({
+  summary: z.string().describe("Sažetak intervjua u 2–3 rečenice."),
+  main_reason: z.string().describe("Glavni razlog ponašanja, kratko (do 10 reči), rečima pogodnim za kohortu."),
+  reasons: z.array(z.string()).describe("Svi razlozi koje je korisnik naveo, kratko."),
+  quotes: z.array(z.string()).describe("Doslovni citati korisnika iz razgovora (1–3)."),
+  sentiment: z.enum(["neg", "neu", "pos"]),
+  suggested_change: z.string().describe("Jedna konkretna promena proizvoda koja proizlazi iz odgovora."),
+  facts_used: z.array(z.string()).describe("ID-jevi činjenica (npr. f2) na koje se intervjuer zaista pozvao u pitanjima."),
+});
+
+export async function summarize(profile: Profile, history: ChatMessage[], simulated = false): Promise<InterviewResult> {
+  const transcript = [`AI: ${CONSENT_MESSAGE}`, ...history.map((m) => `${m.role === "assistant" ? "AI" : "Korisnik"}: ${m.content}`)].join("\n\n");
+  const facts = profile.facts.map((f) => `- [${f.id}] ${f.text}`).join("\n");
+  const seg = segmentOf(profile);
+  const res = await anthropic().beta.messages.parse({
+    model: MODEL,
+    max_tokens: 8000,
+    output_config: { effort: "medium", format: betaZodOutputFormat(ResultSchema) },
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    messages: [{
+      role: "user",
+      content: `Analiziraj intervju sa korisnikom PDF alata Folio. Piši na srpskom (latinica).
+
+Istraživačko pitanje grupe „${seg.name}“: ${seg.researchQuestion}
+
+Činjenice o korisniku (izračunate iz događaja):
+${facts}
+
+Transkript:
+${transcript}
+
+Pravila: razloge i citate uzimaj samo iz onoga što je korisnik zaista rekao; citati su doslovni. Ako korisnik nije pristao ili nije dao razlog, main_reason je „nije naveden razlog“. U facts_used stavi samo ID-jeve iz liste činjenica koje je AI zaista pomenuo.`,
+    }],
+  });
+  const out = res.parsed_output;
+  if (res.stop_reason === "refusal" || !out) throw new Error(`Sažetak nije uspeo (stop_reason: ${res.stop_reason}).`);
+  const validIds = new Set(profile.facts.map((f) => f.id));
+  return {
+    userId: profile.userId,
+    summary: out.summary,
+    mainReason: out.main_reason,
+    reasons: out.reasons,
+    quotes: out.quotes,
+    sentiment: out.sentiment,
+    suggestedChange: out.suggested_change,
+    // Zaštita: zadržavamo samo ID-jeve koji stvarno postoje.
+    factsUsed: out.facts_used.filter((id) => validIds.has(id)),
+    simulated,
+  };
+}
