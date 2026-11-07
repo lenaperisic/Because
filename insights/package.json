@@ -10,6 +10,9 @@
     "seed": "tsx scripts/seed.ts",
     "fetch": "tsx scripts/fetch.ts",
     "facts": "tsx scripts/facts.ts",
+    "simulate": "tsx scripts/simulate.ts",
+    "synthesize": "tsx scripts/synthesize.ts",
+    "name-segments": "tsx scripts/name-segments.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

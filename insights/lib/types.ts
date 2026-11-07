@@ -26,5 +26,24 @@ export type EventCache = {
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
-/** Sačuvan intervju: rezultat iz ugovora + transkript. */
-export type InterviewRecord = { result: InterviewResult; transcript: ChatMessage[]; completedAt: string };
+/** Sačuvan intervju: rezultat iz ugovora + transkript + grupa u trenutku intervjua + status upisa u PostHog. */
+export type InterviewRecord = {
+  result: InterviewResult;
+  transcript: ChatMessage[];
+  completedAt: string;
+  segmentId?: string;
+  posthog?: { ok: boolean; at: string; error?: string };
+  /** Samo za simulirane: skriveni razlog koji je igrao simulirani korisnik (za proveru sinteze). */
+  hiddenReason?: string;
+};
+
+/** Sinteza razloga za jednu grupu, iz sačuvanih intervjua. */
+export type SegmentSynthesis = {
+  segmentId: string;
+  generatedAt: string;
+  interviews: number;
+  simulated: number;
+  headline: string;
+  themes: { reason: string; count: number; quotes: string[] }[];
+  suggestedChanges: string[];
+};

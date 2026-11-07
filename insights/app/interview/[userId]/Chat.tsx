@@ -5,13 +5,14 @@ import type { ChatMessage, InterviewRecord, InterviewResult } from "@/lib/types"
 const SENTIMENT = { neg: "negativan", neu: "neutralan", pos: "pozitivan" } as const;
 
 type Props = { userId: string; consent: string; previous: InterviewRecord | null };
+type Finished = InterviewResult & { posthog?: InterviewRecord["posthog"] };
 
 export default function Chat({ userId, consent, previous }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
-  const [result, setResult] = useState<InterviewResult | null>(null);
+  const [result, setResult] = useState<Finished | null>(null);
   const [error, setError] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -28,7 +29,7 @@ export default function Chat({ userId, consent, previous }: Props) {
     setDone(true);
     setBusy(true);
     try {
-      setResult(await post<InterviewResult>("/api/interview/finish", { userId, messages: history }));
+      setResult(await post<Finished>("/api/interview/finish", { userId, messages: history }));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -55,7 +56,7 @@ export default function Chat({ userId, consent, previous }: Props) {
     setBusy(false);
   }
 
-  const shown = result ?? (messages.length === 0 ? previous?.result ?? null : null);
+  const shown: Finished | null = result ?? (messages.length === 0 && previous ? { ...previous.result, posthog: previous.posthog } : null);
 
   return (
     <div>
@@ -86,7 +87,7 @@ export default function Chat({ userId, consent, previous }: Props) {
   );
 }
 
-function ResultView({ result, earlier }: { result: InterviewResult; earlier: boolean }) {
+function ResultView({ result, earlier }: { result: Finished; earlier: boolean }) {
   return (
     <div className="card" style={{ marginTop: 16 }}>
       <h2>{earlier ? "Prethodni rezultat" : "Rezultat intervjua"} {result.simulated && <span className="pill">simulirano</span>}</h2>
@@ -98,6 +99,12 @@ function ResultView({ result, earlier }: { result: InterviewResult; earlier: boo
         <dt>Predlog promene</dt><dd>{result.suggestedChange}</dd>
         <dt>Ton</dt><dd>{SENTIMENT[result.sentiment]}</dd>
         <dt>Korišćene činjenice</dt><dd>{result.factsUsed.join(", ") || "nijedna"}</dd>
+        <dt>PostHog</dt>
+        <dd>
+          {!result.posthog ? "nije upisano" : result.posthog.ok
+            ? <>✓ <code>ai_interview_completed</code> + osobine <code>ai_segment</code>, <code>ai_main_reason</code></>
+            : <span className="error">✗ {result.posthog.error}</span>}
+        </dd>
       </dl>
     </div>
   );

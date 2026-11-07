@@ -4,7 +4,7 @@
 import { loadEnv } from "../lib/env";
 import { buildProfile, getStats } from "../lib/facts";
 import { loadCache, refreshFromPosthog } from "../lib/posthog";
-import { classify, SEGMENT_DEFS } from "../lib/segments";
+import { classify, segmentDef } from "../lib/segments";
 
 loadEnv();
 
@@ -15,7 +15,7 @@ async function main() {
   const profile = buildProfile(cache, userId);
   if (!profile) throw new Error(`Nema osobe ${userId} u kešu (${cache.source}, ${cache.people.length} osoba).`);
   const why = classify(getStats(cache, userId)!).why;
-  console.log(`${profile.userId} · ${profile.role} · grupa: ${SEGMENT_DEFS[profile.segmentId as keyof typeof SEGMENT_DEFS].name} (${why})`);
+  console.log(`${profile.userId} · ${profile.role} · grupa: ${segmentDef(profile.segmentId).name} (${why})`);
   console.log(JSON.stringify(profile.facts, null, 2));
 }
 

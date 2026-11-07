@@ -1,6 +1,6 @@
 # Insights · AI intervjui na PostHog podacima
 
-Faza 1 iz `../plan-ai-intervjui.md` (Checkpoint 1): **PostHog događaji → profil sa činjenicama → grupa → AI intervju → sačuvan rezultat.**
+Faze 1 i 2 iz `../plan-ai-intervjui.md`: **PostHog događaji → profil sa činjenicama → grupa → AI intervju → rezultat nazad u PostHog → dashboard i sinteza po grupi.**
 
 ## Podešavanje
 
@@ -24,6 +24,10 @@ npm run seed -- --dry-run         # samo lokalna rezerva, bez PostHoga
 npm run fetch                     # HogQL -> data/cache.json, ispiše broj ljudi po grupi
 npm run fetch -- --local          # isto, nad postojećim kešom ili seed rezervom
 npm run facts -- seed_lekar_017   # činjenice sa ID-jevima i grupa za jednu osobu
+npm run name-segments             # (opciono) Claude imenuje grupe i formuliše pitanja -> data/segment-names.json
+npm run simulate -- --synthesize  # 8 simuliranih intervjua po grupi + sinteza (jasno označeno „simulirano“)
+npm run simulate -- --per 3 --segment probali_ai --no-posthog
+npm run synthesize                # sinteza razloga po grupi iz svih sačuvanih intervjua
 npm run dev                       # http://localhost:3000
 ```
 
@@ -41,9 +45,18 @@ Bez PostHog ključeva aplikacija radi nad `data/seed-backup.json`.
 | `lib/segments.ts` | Pravila za 5 grupa po ponašanju |
 | `lib/interview.ts` | System prompt, chat poziv, strukturisan rezultat (JSON šema iz zod-a) |
 | `lib/llm.ts` | Jedan poziv modela: Perplexity `/v1/agent` (`anthropic/claude-opus-5-5`, `tool_choice: none` = bez web pretrage) ili Anthropic direktno |
-| `lib/store.ts` | Rezultati u `data/results/<userId>.json` |
-| `app/interview/[userId]` | Chat ekran + činjenice sa strane |
-| `app/api/*` | `refresh`, `segments`, `profile/[userId]`, `interview`, `interview/finish` |
+| `lib/store.ts` | Rezultati u `data/results/<userId>.json`, sinteze u `data/synthesis/<grupa>.json` |
+| `lib/capture.ts` | Upis nazad u PostHog: `ai_interview_completed` + `$set` (`ai_segment`, `ai_main_reason`, `ai_sentiment`, `ai_suggested_change`, `ai_interview_simulated`) |
+| `lib/finish.ts` | Kraj intervjua (pravog ili simuliranog): sažetak → čuvanje → PostHog |
+| `lib/naming.ts` | Claude daje ime i istraživačko pitanje grupama iz zbirnih brojeva (članstvo ostaje po pravilima) |
+| `lib/simulate.ts` | Simulirani korisnik sa skrivenim razlogom (po grupi) protiv pravog intervjuera |
+| `lib/synthesis.ts` | Teme sa citatima po grupi; broj po temi i citate proverava kod |
+| `app/page.tsx` | Ekran **Grupe**: kartice, mešavina uloga, intervjui, uvid; traka „Uživo iz Folio-a“ |
+| `app/segment/[id]` | Ekran **Grupa**: sinteza sa citatima i predlozima, tabela korisnika sa statusom i PostHog upisom |
+| `app/interview/[userId]` | Ekran **Korisnik**: chat + činjenice + rezultat i status upisa u PostHog |
+| `app/api/*` | `refresh`, `segments`, `segments/name`, `profile/[userId]`, `interview`, `interview/finish`, `synthesis/[segmentId]` |
+
+Dashboard se sam osvežava na 4 s (novi rezultati); prekidač „PostHog na 30 s“ povlači i nove događaje, pa se osoba iz Folio-a pojavi bez klika.
 
 ### Pravila za grupe
 
@@ -61,6 +74,10 @@ Seed daje: Potpisivači 59, Čitači 43, Usklađenost 58, Probali AI 21 (develop
 - Preko Perplexity-ja: odgovor u chatu oko 5–6 s, sažetak oko 13 s.
 - Direktno preko Anthropic-a: `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`), pa ako model odbije zahtev, API ga sam ponovi na drugom modelu.
 
-## Sledeće (faza 2)
+### Upis nazad u PostHog
 
-Claude imenuje grupe, upis rezultata nazad u PostHog (`ai_interview_completed` + `$set`), dashboard, simulirani intervjui i sinteza po grupi.
+Posle svakog intervjua ide `POST {POSTHOG_HOST}/i/v0/e/` sa project tokenom. Ako PostHog zakaže, rezultat ostaje sačuvan, a greška se vidi na stranici. U PostHogu: Persons → filter `ai_main_reason` → Save as cohort. Simulirani intervjui imaju `ai_interview_simulated = true` (isključite ih iz kohorte tim filterom ili pokrenite simulaciju sa `--no-posthog`).
+
+## Sledeće
+
+AI anketa (3 personalizovana pitanja umesto chata); izgled dashboarda (C).

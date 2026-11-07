@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { complete, RefusalError, type Turn } from "./llm";
-import { SEGMENT_DEFS, type SegmentId } from "./segments";
+import { segmentDef } from "./segments";
 import type { ChatMessage, InterviewResult, Profile } from "./types";
 
 // Jedini deo gde AI odlučuje. Sve činjenice o korisniku su izračunate pre toga (lib/facts.ts),
@@ -20,7 +20,7 @@ export const CONSENT_MESSAGE =
 const OPENING_USER_TURN = "(Korisnik je otvorio stranicu intervjua.)";
 
 function segmentOf(profile: Profile) {
-  return SEGMENT_DEFS[profile.segmentId as SegmentId] ?? SEGMENT_DEFS.novi;
+  return segmentDef(profile.segmentId);
 }
 
 export function systemPrompt(profile: Profile): string {
