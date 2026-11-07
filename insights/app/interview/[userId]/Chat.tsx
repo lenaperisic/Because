@@ -12,6 +12,7 @@ export default function Chat({ userId, consent, previous }: Props) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [result, setResult] = useState<InterviewResult | null>(null);
+  const [inPosthog, setInPosthog] = useState<boolean>(!!previous?.posthogSentAt);
   const [error, setError] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -28,7 +29,13 @@ export default function Chat({ userId, consent, previous }: Props) {
     setDone(true);
     setBusy(true);
     try {
-      setResult(await post<InterviewResult>("/api/interview/finish", { userId, messages: history }));
+      const res = await fetch("/api/interview/finish", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, messages: history }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setInPosthog(res.headers.get("X-Posthog") === "sent");
+      setResult(data as InterviewResult);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -81,15 +88,16 @@ export default function Chat({ userId, consent, previous }: Props) {
           )}
         </div>
       )}
-      {shown && <ResultView result={shown} earlier={!result} />}
+      {shown && <ResultView result={shown} earlier={!result} inPosthog={inPosthog} />}
     </div>
   );
 }
 
-function ResultView({ result, earlier }: { result: InterviewResult; earlier: boolean }) {
+function ResultView({ result, earlier, inPosthog }: { result: InterviewResult; earlier: boolean; inPosthog: boolean }) {
   return (
     <div className="card" style={{ marginTop: 16 }}>
-      <h2>{earlier ? "Prethodni rezultat" : "Rezultat intervjua"} {result.simulated && <span className="pill">simulirano</span>}</h2>
+      <h2>{earlier ? "Prethodni rezultat" : "Rezultat intervjua"} {result.simulated && <span className="pill">simulirano</span>}{" "}
+        <span className="pill">{inPosthog ? "✓ upisano u PostHog (ai_main_reason)" : "nije upisano u PostHog"}</span></h2>
       <dl className="result">
         <dt>Glavni razlog</dt><dd>{result.mainReason}</dd>
         <dt>Sažetak</dt><dd>{result.summary}</dd>

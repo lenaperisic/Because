@@ -20,8 +20,11 @@ export async function POST(req: Request) {
   if (!profile) return NextResponse.json({ error: `Nema osobe ${userId}` }, { status: 404 });
   try {
     const result = await summarize(profile, messages);
-    saveInterview(result, messages);
-    return NextResponse.json(result);
+    const record = await saveInterview(result, messages, { segmentId: profile.segmentId });
+    // Telo odgovora je InterviewResult (ugovor); status upisa u PostHog ide u zaglavlje.
+    return NextResponse.json(result, {
+      headers: { "X-Posthog": record.posthogSentAt ? "sent" : "skipped" },
+    });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });

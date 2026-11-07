@@ -10,7 +10,8 @@
     "seed": "tsx scripts/seed.ts",
     "fetch": "tsx scripts/fetch.ts",
     "facts": "tsx scripts/facts.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "simulate": "tsx scripts/simulate.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",

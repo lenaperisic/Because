@@ -27,4 +27,14 @@ export type EventCache = {
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 /** Sačuvan intervju: rezultat iz ugovora + transkript. */
-export type InterviewRecord = { result: InterviewResult; transcript: ChatMessage[]; completedAt: string };
+export type InterviewRecord = {
+  result: InterviewResult;
+  transcript: ChatMessage[];
+  completedAt: string;
+  segmentId?: string;
+  /** Kad je rezultat upisan u PostHog (ai_interview_completed + $set). */
+  posthogSentAt?: string;
+  posthogError?: string;
+  /** Samo za simulirane: razlog koji je „korisnik“ imao, za proveru tačnosti intervjua. */
+  hiddenReason?: string;
+};

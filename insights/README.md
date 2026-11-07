@@ -24,6 +24,8 @@ npm run seed -- --dry-run         # samo lokalna rezerva, bez PostHoga
 npm run fetch                     # HogQL -> data/cache.json, ispiše broj ljudi po grupi
 npm run fetch -- --local          # isto, nad postojećim kešom ili seed rezervom
 npm run facts -- seed_lekar_017   # činjenice sa ID-jevima i grupa za jednu osobu
+npm run simulate -- --per 8       # simulirani intervjui, 8 po grupi (simulated: true), upis u PostHog
+npm run simulate -- --per 1 --segment novi --no-posthog   # brza proba
 npm run dev                       # http://localhost:3000
 ```
 
@@ -41,7 +43,9 @@ Bez PostHog ključeva aplikacija radi nad `data/seed-backup.json`.
 | `lib/segments.ts` | Pravila za 5 grupa po ponašanju |
 | `lib/interview.ts` | System prompt, chat poziv, strukturisan rezultat (JSON šema iz zod-a) |
 | `lib/llm.ts` | Jedan poziv modela: Perplexity `/v1/agent` (`anthropic/claude-opus-5-5`, `tool_choice: none` = bez web pretrage) ili Anthropic direktno |
-| `lib/store.ts` | Rezultati u `data/results/<userId>.json` |
+| `lib/store.ts` | Rezultati u `data/results/<userId>.json`, pa upis u PostHog |
+| `lib/capture.ts` | Upis nazad: događaj `ai_interview_completed` + `$set` (`ai_segment`, `ai_main_reason`, `ai_sentiment`, `ai_suggested_change`, `ai_interview_simulated`, `ai_interviewed_at`) |
+| `scripts/simulate.ts` | Drugi Claude igra korisnika sa skrivenim razlogom; na kraju poredi pogođen razlog sa skrivenim |
 | `app/interview/[userId]` | Chat ekran + činjenice sa strane |
 | `app/api/*` | `refresh`, `segments`, `profile/[userId]`, `interview`, `interview/finish` |
 
@@ -61,6 +65,14 @@ Seed daje: Potpisivači 59, Čitači 43, Usklađenost 58, Probali AI 21 (develop
 - Preko Perplexity-ja: odgovor u chatu oko 5–6 s, sažetak oko 13 s.
 - Direktno preko Anthropic-a: `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`), pa ako model odbije zahtev, API ga sam ponovi na drugom modelu.
 
+### Upis nazad u PostHog
+
+Posle svakog intervjua (uživo i simuliranog) šalje se `ai_interview_completed` sa osobinama osobe. Ako PostHog ne radi, rezultat se ipak sačuva lokalno, a greška se upiše u `posthogError`. U PostHogu: **People → Cohorts → New cohort → Person property `ai_main_reason` contains „veruje“** (ili `ai_segment = potpisivaci`). Simulirane izbacite filterom `ai_interview_simulated = false`.
+
+### Simulirani intervjui
+
+40 intervjua (`--per 8`) traje oko 8 minuta sa `--parallel 3` i troši oko 500 poziva modela. Pustite ih jednom posle seeda, a ne pred demo.
+
 ## Sledeće (faza 2)
 
-Claude imenuje grupe, upis rezultata nazad u PostHog (`ai_interview_completed` + `$set`), dashboard, simulirani intervjui i sinteza po grupi.
+Dashboard (grupe, grupa, korisnik, osvežavanje uživo), sinteza razloga po grupi sa citatima, Claude imenuje grupe, AI anketa.
