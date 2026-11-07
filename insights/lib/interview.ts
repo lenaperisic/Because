@@ -1,13 +1,11 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
+import { complete, RefusalError, type Turn } from "./llm";
 import { SEGMENT_DEFS, type SegmentId } from "./segments";
 import type { ChatMessage, InterviewResult, Profile } from "./types";
 
 // Jedini deo gde AI odlučuje. Sve činjenice o korisniku su izračunate pre toga (lib/facts.ts),
 // a model sme da se poziva samo na njih.
 
-const MODEL = process.env.INTERVIEW_MODEL || "claude-opus-5-5";
 export const MAX_QUESTIONS = 6;
 /** Model završava razgovor ovim markerom; server ga skida pre slanja korisniku. */
 const END = "[KRAJ]";
@@ -20,9 +18,6 @@ export const CONSENT_MESSAGE =
 
 /** Prazna korisnička poruka pre pozdrava, jer razgovor sa API-jem počinje korisnikom. */
 const OPENING_USER_TURN = "(Korisnik je otvorio stranicu intervjua.)";
-
-let client: Anthropic | null = null;
-const anthropic = () => (client ??= new Anthropic());
 
 function segmentOf(profile: Profile) {
   return SEGMENT_DEFS[profile.segmentId as SegmentId] ?? SEGMENT_DEFS.novi;
@@ -59,7 +54,7 @@ ${facts}
 }
 
 /** Istorija za API: početni korisnički potez + fiksni pozdrav + razgovor. */
-function apiMessages(history: ChatMessage[]): Anthropic.Beta.BetaMessageParam[] {
+function apiMessages(history: ChatMessage[]): Turn[] {
   return [
     { role: "user", content: OPENING_USER_TURN },
     { role: "assistant", content: CONSENT_MESSAGE },
@@ -85,20 +80,14 @@ export async function nextReply(profile: Profile, history: ChatMessage[]): Promi
     // Instrukcija operatera usred razgovora: ne menja system prompt, pa keš ostaje.
     messages.push({ role: "system", content: `Postavio si ${asked} pitanja. Sada završi intervju po pravilu za kraj, bez novih pitanja.` });
   }
-  const res = await anthropic().beta.messages.create({
-    model: MODEL,
-    max_tokens: 4000,
+  let text: string;
+  try {
     // Chat: niska latencija je važnija od dubokog razmišljanja.
-    output_config: { effort: "low" },
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    system: [{ type: "text", text: systemPrompt(profile), cache_control: { type: "ephemeral" } }],
-    messages,
-  });
-  if (res.stop_reason === "refusal") {
-    return { reply: "Izvinite, ne mogu da nastavim ovaj razgovor. Hvala vam na vremenu!", done: true };
+    text = await complete({ instructions: systemPrompt(profile), turns: messages, maxTokens: 4000, effort: "low" });
+  } catch (e) {
+    if (e instanceof RefusalError) return { reply: "Izvinite, ne mogu da nastavim ovaj razgovor. Hvala vam na vremenu!", done: true };
+    throw e;
   }
-  const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
   const done = text.includes(END) || asked >= MAX_QUESTIONS;
   return { reply: text.replace(END, "").trim(), done };
 }
@@ -119,13 +108,13 @@ export async function summarize(profile: Profile, history: ChatMessage[], simula
   const transcript = [`AI: ${CONSENT_MESSAGE}`, ...history.map((m) => `${m.role === "assistant" ? "AI" : "Korisnik"}: ${m.content}`)].join("\n\n");
   const facts = profile.facts.map((f) => `- [${f.id}] ${f.text}`).join("\n");
   const seg = segmentOf(profile);
-  const res = await anthropic().beta.messages.parse({
-    model: MODEL,
-    max_tokens: 8000,
-    output_config: { effort: "medium", format: betaZodOutputFormat(ResultSchema) },
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    messages: [{
+  const out = await complete({
+    instructions: "Ti si analitičar korisničkih intervjua. Vraćaš isključivo JSON po zadatoj šemi.",
+    maxTokens: 8000,
+    effort: "medium",
+    schema: ResultSchema,
+    schemaName: "interview_result",
+    turns: [{
       role: "user",
       content: `Analiziraj intervju sa korisnikom PDF alata Folio. Piši na srpskom (latinica).
 
@@ -140,8 +129,6 @@ ${transcript}
 Pravila: razloge i citate uzimaj samo iz onoga što je korisnik zaista rekao; citati su doslovni. Ako korisnik nije pristao ili nije dao razlog, main_reason je „nije naveden razlog“. U facts_used stavi samo ID-jeve iz liste činjenica koje je AI zaista pomenuo.`,
     }],
   });
-  const out = res.parsed_output;
-  if (res.stop_reason === "refusal" || !out) throw new Error(`Sažetak nije uspeo (stop_reason: ${res.stop_reason}).`);
   const validIds = new Set(profile.facts.map((f) => f.id));
   return {
     userId: profile.userId,

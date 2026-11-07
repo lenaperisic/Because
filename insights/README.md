@@ -11,7 +11,8 @@ cp .env.example .env.local   # popunite ključeve
 
 | Promenljiva | Čemu služi |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Claude intervju (`INTERVIEW_MODEL`, podrazumevano `claude-opus-5-5`) |
+| `PERPLEXITY_API_KEY` | Claude preko Perplexity Agent API-ja (hakaton krediti). Ako postoji, ima prednost. |
+| `ANTHROPIC_API_KEY` | Claude direktno, kad nema Perplexity ključa (`INTERVIEW_MODEL`, podrazumevano `claude-opus-5-5`) |
 | `POSTHOG_KEY`, `POSTHOG_HOST` | Project token (`phc_...`): seed (i kasnije upis nazad) |
 | `POSTHOG_PERSONAL_KEY`, `POSTHOG_PROJECT_ID`, `POSTHOG_API_HOST` | Personal key sa **Query Read**: čitanje događaja |
 
@@ -38,7 +39,8 @@ Bez PostHog ključeva aplikacija radi nad `data/seed-backup.json`.
 | `lib/posthog.ts` | 3 HogQL upita (upotreba po alatu, osoba, današnja aktivnost), jedan po jedan, keš u `data/cache.json` |
 | `lib/facts.ts` | Činjenice sa ID-jevima; računa ih kod, ne model |
 | `lib/segments.ts` | Pravila za 5 grupa po ponašanju |
-| `lib/interview.ts` | System prompt, chat poziv, strukturisan rezultat (structured outputs + zod) |
+| `lib/interview.ts` | System prompt, chat poziv, strukturisan rezultat (JSON šema iz zod-a) |
+| `lib/llm.ts` | Jedan poziv modela: Perplexity `/v1/agent` (`anthropic/claude-opus-5-5`, `tool_choice: none` = bez web pretrage) ili Anthropic direktno |
 | `lib/store.ts` | Rezultati u `data/results/<userId>.json` |
 | `app/interview/[userId]` | Chat ekran + činjenice sa strane |
 | `app/api/*` | `refresh`, `segments`, `profile/[userId]`, `interview`, `interview/finish` |
@@ -56,7 +58,8 @@ Seed daje: Potpisivači 59, Čitači 43, Usklađenost 58, Probali AI 21 (develop
 - Prva poruka je fiksna: AI se predstavlja i traži pristanak.
 - Model sme da pominje samo činjenice iz liste; najviše 6 pitanja, pa se razgovor završava (sistemska poruka usred razgovora, bez promene system prompta).
 - Na kraju poseban poziv vraća `InterviewResult`; `factsUsed` se filtrira na ID-jeve koji stvarno postoje.
-- `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`): ako model odbije zahtev, API ga sam ponovi na drugom modelu.
+- Preko Perplexity-ja: odgovor u chatu oko 5–6 s, sažetak oko 13 s.
+- Direktno preko Anthropic-a: `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`), pa ako model odbije zahtev, API ga sam ponovi na drugom modelu.
 
 ## Sledeće (faza 2)
 
