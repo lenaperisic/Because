@@ -20,7 +20,8 @@ import javax.swing.event.DocumentListener;
 public final class Widgets {
     private Widgets() {}
 
-    public enum Kind { PRIMARY, OUTLINE, SOFT, GHOST }
+    /** CHROME: dugme na crnoj gornjoj traci; izabrano je žuto (marker). */
+    public enum Kind { PRIMARY, OUTLINE, SOFT, GHOST, CHROME }
 
     /** Zaobljeno dugme sa tekstom. */
     public static class Pill extends JButton {
@@ -70,7 +71,10 @@ public final class Widgets {
             RoundRectangle2D shape = new RoundRectangle2D.Double(pad, pad / 2.0, w - pad * 2 - 1, h - pad * 2 - 1, r, r);
             Color bg = null, fg = Theme.TEXT, border = null;
             boolean on = selected || kind == Kind.PRIMARY;
-            if (kind == Kind.PRIMARY || selected) {
+            if (kind == Kind.CHROME) {
+                if (selected) { bg = Theme.MARKER; fg = Theme.TEXT; }
+                else { bg = press ? Theme.CHROME_LINE : hover ? Theme.CHROME_HOVER : null; fg = Theme.CHROME_TEXT; border = Theme.CHROME_LINE; }
+            } else if (kind == Kind.PRIMARY || selected) {
                 bg = press ? Theme.mix(color, Color.BLACK, 0.15) : hover ? Theme.mix(color, Color.BLACK, 0.07) : color;
                 fg = Color.WHITE;
             } else if (kind == Kind.OUTLINE) {
@@ -265,13 +269,16 @@ public final class Widgets {
                 p.lineTo(cx + h * 0.85, cy + h * 0.85); p.lineTo(cx + h * 0.85, cy + h * 0.1);
                 g2.draw(p); break;
             case SPARK:
-                p.moveTo(cx - h * 0.2, cy - h * 0.9);
-                p.curveTo(cx - h * 0.1, cy - h * 0.25, cx + h * 0.05, cy - h * 0.1, cx + h * 0.6, cy);
-                p.curveTo(cx + h * 0.05, cy + h * 0.1, cx - h * 0.1, cy + h * 0.25, cx - h * 0.2, cy + h * 0.9);
-                p.curveTo(cx - h * 0.3, cy + h * 0.25, cx - h * 0.45, cy + h * 0.1, cx - h * 1.0, cy);
-                p.curveTo(cx - h * 0.45, cy - h * 0.1, cx - h * 0.3, cy - h * 0.25, cx - h * 0.2, cy - h * 0.9);
+                // AI sažetak: tekst koji se skraćuje (bez „magic“ zvezdica).
+                p.moveTo(cx - h * 0.85, cy - h * 0.6); p.lineTo(cx + h * 0.85, cy - h * 0.6);
+                p.moveTo(cx - h * 0.85, cy - h * 0.05); p.lineTo(cx + h * 0.35, cy - h * 0.05);
+                p.moveTo(cx - h * 0.85, cy + h * 0.5); p.lineTo(cx - h * 0.15, cy + h * 0.5);
                 g2.draw(p);
-                g2.fill(new Ellipse2D.Double(cx + h * 0.55, cy - h * 0.95, h * 0.35, h * 0.35));
+                Theme.stroke(g2, 1.4f);
+                Path2D arrow = new Path2D.Double();
+                arrow.moveTo(cx + h * 0.35, cy + h * 0.2); arrow.lineTo(cx + h * 0.75, cy + h * 0.5); arrow.lineTo(cx + h * 0.35, cy + h * 0.8);
+                g2.draw(arrow);
+                Theme.stroke(g2, 1.8f);
                 break;
             case FILE:
                 p.moveTo(cx - h * 0.7, cy - h * 0.9); p.lineTo(cx + h * 0.25, cy - h * 0.9); p.lineTo(cx + h * 0.7, cy - h * 0.45);

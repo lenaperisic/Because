@@ -23,13 +23,12 @@ public class Insights extends JComponent {
     @Override protected void paintComponent(Graphics g) {
         Graphics2D g2 = Theme.smooth(g);
         int w = getWidth(), h = getHeight();
-        g2.setColor(Theme.SIDEBAR);
+        g2.setColor(Theme.BG);
         g2.fillRect(0, 0, w, h);
         g2.setColor(Theme.GRID);
         g2.fillRect(0, 0, 1, h);
 
         Model.Profile p = app.profile;
-        Color pc = p.color;
         int x = 22, cw = w - 44, y = 36;
 
         g2.setFont(Theme.bold(17f));
@@ -49,26 +48,29 @@ public class Insights extends JComponent {
             if (f.id.equals("read")) continue;
             if (top == null || p.count(f.id) > p.count(top.id)) top = f;
         }
-        String[][] tiles = {
-                { String.valueOf(p.count("read")), "otvaranja" },
-                { String.valueOf(total - p.count("read")), "upotreba alata" },
-                { String.valueOf(p.count("sign")), "potpisa" },
-                { top == null ? "—" : top.name, "najčešći alat" } };
-        double tw = (cw - 10) / 2.0;
-        for (int k = 0; k < 4; k++) {
-            double tx = x + (k % 2) * (tw + 10), ty = y + (k / 2) * 70;
-            Theme.shadow(g2, tx, ty, tw, 60, 14, 4, 26);
-            g2.setColor(Theme.BG);
-            g2.fill(new RoundRectangle2D.Double(tx, ty, tw, 60, 14, 14));
-            g2.setColor(k == 3 ? pc : Theme.TEXT);
-            g2.setFont(Theme.bold(k == 3 ? 17f : 21f));
+        // Sažetak kao rečenica, ne kao kartice sa velikim brojevima.
+        y += 16;
+        g2.setFont(Theme.font(14f));
+        g2.setColor(Theme.TEXT);
+        g2.drawString(p.count("read") + " otvaranja · " + (total - p.count("read")) + " upotreba alata", x, y);
+        y += 26;
+        if (top != null) {
+            g2.setFont(Theme.font(14f));
             FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(Theme.fit(tiles[k][0], fm, (int) tw - 24), (float) tx + 14, (float) ty + 30);
-            g2.setFont(Theme.font(11.5f));
-            g2.setColor(Theme.MUTED);
-            g2.drawString(tiles[k][1], (float) tx + 14, (float) ty + 48);
+            String lead = "Najčešće: ";
+            g2.drawString(lead, x, y);
+            int lx = x + fm.stringWidth(lead);
+            g2.setFont(Theme.bold(14f));
+            fm = g2.getFontMetrics();
+            String name = top.name + ", " + p.count(top.id) + "×";
+            Theme.marker(g2, lx - 4, y - 15, fm.stringWidth(name) + 8, 20);
+            g2.setColor(Theme.TEXT);
+            g2.drawString(name, lx, y);
         }
-        y += 158;
+        y += 30;
+        g2.setColor(Theme.GRID);
+        g2.fillRect(x, y, cw, 1);
+        y += 28;
 
         // trake po funkciji
         g2.setFont(Theme.bold(13.5f));
@@ -94,8 +96,14 @@ public class Insights extends JComponent {
             g2.setColor(Theme.TEXT);
             g2.drawString(f.name, x + 24, y + 12);
             double bw = Math.max(4, barMax * c / (double) max);
-            g2.setColor(Theme.alpha(pc, shown == 0 ? 255 : 120));
-            g2.fill(new RoundRectangle2D.Double(x + labelW, y + 2, bw, 11, 11, 11));
+            // Najkorišćeniji alat je markiran; ostali su sivo mastilo.
+            g2.setColor(shown == 0 ? Theme.MARKER : Theme.hex("#BDBDBD"));
+            g2.fill(new RoundRectangle2D.Double(x + labelW, y + 2, bw, 11, 3, 3));
+            if (shown == 0) {
+                g2.setColor(Theme.TEXT);
+                Theme.stroke(g2, 1f);
+                g2.draw(new RoundRectangle2D.Double(x + labelW, y + 2, bw, 11, 3, 3));
+            }
             g2.setFont(Theme.bold(12f));
             g2.setColor(Theme.TEXT);
             String n = String.valueOf(c);

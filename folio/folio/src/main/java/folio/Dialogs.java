@@ -108,9 +108,12 @@ public final class Dialogs {
         JComponent t = new JComponent() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = Theme.smooth(g);
-                g2.setColor(Theme.mix(color, Color.WHITE, 0.85));
-                g2.fill(new Ellipse2D.Double(0, 2, 40, 40));
-                g2.setColor(color);
+                // Isti znak za sve dijaloge: crni obod, ikonica mastilom (boja dijaloga se ne koristi).
+                g2.setColor(Theme.BG);
+                g2.fill(new Ellipse2D.Double(0.5, 2.5, 39, 39));
+                g2.setColor(Theme.TEXT);
+                Theme.stroke(g2, 1.3f);
+                g2.draw(new Ellipse2D.Double(0.5, 2.5, 39, 39));
                 Widgets.paintIcon(g2, icon, 20, 22, 18);
                 g2.setFont(Theme.bold(19f));
                 g2.setColor(Theme.TEXT);
@@ -145,7 +148,7 @@ public final class Dialogs {
                 Graphics2D g2 = Theme.smooth(g);
                 int y = 18;
                 for (String s : items) {
-                    g2.setColor(Theme.hex("#A142F4"));
+                    g2.setColor(Theme.TEXT);
                     g2.fill(new Ellipse2D.Double(4, y - 9, 8, 8));
                     g2.setFont(Theme.font(14.5f));
                     g2.setColor(Theme.TEXT);
@@ -187,9 +190,7 @@ public final class Dialogs {
                     boolean add = "+".equals(c[0]);
                     Color base = add ? Theme.hex("#34A853") : Theme.hex("#EA4335");
                     g2.setColor(Theme.mix(base, Color.WHITE, 0.88));
-                    g2.fill(new RoundRectangle2D.Double(0, y, getWidth(), 40, 10, 10));
-                    g2.setColor(base);
-                    g2.fill(new RoundRectangle2D.Double(0, y, 4, 40, 4, 4));
+                    g2.fill(new RoundRectangle2D.Double(0, y, getWidth(), 40, 6, 6));
                     g2.setFont(Theme.bold(16f));
                     g2.setColor(Theme.ink(base));
                     g2.drawString(add ? "+" : "−", 16, y + 26);
@@ -215,9 +216,9 @@ public final class Dialogs {
         JComponent t = new JComponent() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = Theme.smooth(g);
-                g2.setColor(new Color(27, 33, 48, 238));
-                g2.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), getHeight(), getHeight()));
-                g2.setColor(Theme.hex("#7CD99A"));
+                g2.setColor(Theme.alpha(Theme.CHROME, 242));
+                g2.fill(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 10, 10));
+                g2.setColor(Theme.MARKER);
                 g2.fill(new Ellipse2D.Double(18, getHeight() / 2.0 - 4, 8, 8));
                 g2.setFont(Theme.bold(13.5f));
                 g2.setColor(Color.WHITE);

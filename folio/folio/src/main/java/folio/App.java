@@ -240,24 +240,28 @@ public class App {
         @Override protected void paintComponent(Graphics g) {
             Graphics2D g2 = Theme.smooth(g);
             int w = getWidth(), h = getHeight();
-            boolean ai = f.id.equals("ai_summary");
-            Color pc = ai ? Theme.hex("#A142F4") : profile.color;
-            RoundRectangle2D bg = new RoundRectangle2D.Double(2, 2, w - 4, h - 4, 14, 14);
-            if (active()) { g2.setColor(Theme.mix(pc, Color.WHITE, 0.84)); g2.fill(bg); }
+            boolean on = active();
+            RoundRectangle2D bg = new RoundRectangle2D.Double(2, 2, w - 4, h - 4, 10, 10);
+            if (getModel().isPressed()) { g2.setColor(Theme.GRID); g2.fill(bg); }
             else if (getModel().isRollover()) { g2.setColor(Theme.HOVER); g2.fill(bg); }
-            g2.setColor(active() || ai ? Theme.ink(pc) : Theme.MUTED);
+            g2.setColor(on ? Theme.TEXT : Theme.MUTED);
             Widgets.paintIcon(g2, f.icon, w / 2.0, 22, 18);
             if (attention()) {
-                g2.setColor(Theme.hex("#F29900"));
-                g2.fill(new java.awt.geom.Ellipse2D.Double(w / 2.0 + 10, 8, 8, 8));
-                g2.setColor(Theme.BG);
-                Theme.stroke(g2, 1.5f);
-                g2.draw(new java.awt.geom.Ellipse2D.Double(w / 2.0 + 10, 8, 8, 8));
+                // Žuta tačka sa crnim obodom: dokument čeka ovaj alat.
+                java.awt.geom.Ellipse2D dot = new java.awt.geom.Ellipse2D.Double(w / 2.0 + 9, 7, 9, 9);
+                g2.setColor(Theme.MARKER);
+                g2.fill(dot);
+                g2.setColor(Theme.TEXT);
+                Theme.stroke(g2, 1.3f);
+                g2.draw(dot);
             }
-            g2.setFont(Theme.bold(11f));
-            g2.setColor(active() || ai ? Theme.ink(pc) : Theme.TEXT);
+            g2.setFont(on ? Theme.bold(11.5f) : Theme.font(11.5f));
             FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(f.name, (w - fm.stringWidth(f.name)) / 2f, 48);
+            int tw = fm.stringWidth(f.name);
+            // Primenjen alat je podvučen markerom, kao reč u dokumentu.
+            if (on) Theme.marker(g2, (w - tw) / 2.0 - 4, 38, tw + 8, 14);
+            g2.setColor(Theme.TEXT);
+            g2.drawString(f.name, (w - tw) / 2f, 49);
             g2.dispose();
         }
     }
@@ -280,9 +284,10 @@ public class App {
             g2.setFont(Theme.bold(12f));
             FontMetrics fm = g2.getFontMetrics();
             int kw = fm.stringWidth(doc.kind) + 20;
-            g2.setColor(Theme.mix(doc.color, Color.WHITE, 0.85));
-            g2.fill(new RoundRectangle2D.Double(x, 14, kw, 22, 22, 22));
-            g2.setColor(Theme.ink(doc.color));
+            RoundRectangle2D kindChip = new RoundRectangle2D.Double(x, 14, kw, 22, 6, 6);
+            g2.setColor(Theme.TEXT);
+            Theme.stroke(g2, 1.2f);
+            g2.draw(kindChip);
             g2.drawString(doc.kind, x + 10, 29);
             g2.setFont(Theme.bold(17f));
             g2.setColor(Theme.TEXT);
@@ -321,8 +326,8 @@ public class App {
 
         TopBar() {
             super(new BorderLayout());
-            setBackground(Theme.BG);
-            setBorder(new MatteBorder(0, 0, 1, 0, Theme.GRID));
+            setBackground(Theme.CHROME);
+            setBorder(new MatteBorder(0, 0, 1, 0, Theme.CHROME_LINE));
             setPreferredSize(new Dimension(1200, 72));
 
             JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 16));
@@ -330,22 +335,14 @@ public class App {
             left.setBorder(new EmptyBorder(0, 12, 0, 0));
             logo = new JComponent() {
                 @Override protected void paintComponent(Graphics g) {
+                    // Znak: reč „Folio“ precrtana markerom, crno na žutom, na crnoj traci.
                     Graphics2D g2 = Theme.smooth(g);
-                    Path2D p = new Path2D.Double();
-                    p.moveTo(0, 6); p.quadTo(0, 2, 4, 2); p.lineTo(24, 2); p.lineTo(34, 12);
-                    p.lineTo(34, 36); p.quadTo(34, 40, 30, 40); p.lineTo(4, 40); p.quadTo(0, 40, 0, 36); p.closePath();
-                    g2.setColor(profile.color);
-                    g2.fill(p);
-                    g2.setColor(Theme.mix(profile.color, Color.WHITE, 0.45));
-                    Path2D fold = new Path2D.Double();
-                    fold.moveTo(24, 2); fold.lineTo(24, 12); fold.lineTo(34, 12); fold.closePath();
-                    g2.fill(fold);
-                    g2.setColor(Color.WHITE);
-                    g2.setFont(Theme.bold(9.5f));
-                    g2.drawString("PDF", 6, 33);
-                    g2.setFont(Theme.bold(21f));
+                    g2.setFont(Theme.bold(23f));
+                    FontMetrics fm = g2.getFontMetrics();
+                    int tw = fm.stringWidth("Folio");
+                    Theme.marker(g2, 4, 7, tw + 16, 30);
                     g2.setColor(Theme.TEXT);
-                    g2.drawString("Folio", 46, 29);
+                    g2.drawString("Folio", 12, 30);
                     g2.dispose();
                 }
             };
@@ -363,7 +360,7 @@ public class App {
             right.setBorder(new EmptyBorder(0, 0, 0, 18));
             for (String id : Model.PROFILE_IDS) {
                 Model.Profile p = Model.load(id);
-                Widgets.Pill pill = new Widgets.Pill(p.role, Widgets.Kind.OUTLINE).color(p.color).dot(p.color);
+                Widgets.Pill pill = new Widgets.Pill(p.role, Widgets.Kind.CHROME);
                 pill.setToolTipText(p.name + " · " + p.title);
                 pill.putClientProperty("profile", id);
                 pill.addActionListener(e -> setProfile(id));

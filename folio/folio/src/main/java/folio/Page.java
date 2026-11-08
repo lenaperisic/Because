@@ -20,7 +20,7 @@ import javax.swing.JComponent;
 /** Crta prvu stranu dokumenta kao pravi PDF, sa stanjem: potpis, zacrnjeno, popunjeno, OCR, komentar. */
 public class Page extends JComponent {
     static final int PW = 620, PH = 877, M = 58;
-    static final Color CANVAS = Theme.hex("#EBEEF4");
+    static final Color CANVAS = Theme.hex("#E9E9E9");
     static final Color BODY = Theme.hex("#3A4150");
     static final Color INK_BLUE = Theme.hex("#1E3A8A");
 
@@ -68,24 +68,47 @@ public class Page extends JComponent {
     }
 
     private void paintChips(Graphics2D g2, Model.Doc d, int x, int y) {
+        // Tri stanja: ČEKA (marker, posao za korisnika), GOTOVO (obod + kvačica), INFO (isprekidan obod).
+        final int TODO = 0, DONE = 1, INFO = 2;
         List<Object[]> chips = new ArrayList<>();
-        if (d.has("signature")) chips.add(d.signed ? new Object[] { "Potpisano", Theme.hex("#0F9D58") } : new Object[] { "Čeka potpis", Theme.hex("#F29900") });
-        if (d.scanned) chips.add(d.ocr ? new Object[] { "Tekst prepoznat (OCR)", Theme.hex("#0F9D58") } : new Object[] { "Sken bez teksta", Theme.hex("#9AA0A6") });
-        if (d.has("form")) chips.add(d.filled ? new Object[] { "Formular popunjen", Theme.hex("#0F9D58") } : new Object[] { "Prazan formular", Theme.hex("#F29900") });
-        if (d.hasSensitive()) chips.add(d.redacted ? new Object[] { "Lični podaci zacrnjeni", Theme.hex("#1B2130") } : new Object[] { "Sadrži lične podatke", Theme.hex("#EA4335") });
-        if (d.annotated) chips.add(new Object[] { "1 komentar", Theme.hex("#F9AB00") });
-        g2.setFont(Theme.bold(11.5f));
+        if (d.has("signature")) chips.add(d.signed ? new Object[] { "Potpisano", DONE } : new Object[] { "Čeka potpis", TODO });
+        if (d.scanned) chips.add(d.ocr ? new Object[] { "Tekst prepoznat (OCR)", DONE } : new Object[] { "Sken bez teksta", INFO });
+        if (d.has("form")) chips.add(d.filled ? new Object[] { "Formular popunjen", DONE } : new Object[] { "Prazan formular", TODO });
+        if (d.hasSensitive()) chips.add(d.redacted ? new Object[] { "Lični podaci zacrnjeni", DONE } : new Object[] { "Sadrži lične podatke", TODO });
+        if (d.annotated) chips.add(new Object[] { "1 komentar", INFO });
+        g2.setFont(Theme.bold(12f));
         FontMetrics fm = g2.getFontMetrics();
         for (Object[] c : chips) {
             String t = (String) c[0];
-            Color col = (Color) c[1];
-            int cw = fm.stringWidth(t) + 30;
-            g2.setColor(Theme.mix(col, Color.WHITE, 0.86));
-            g2.fill(new RoundRectangle2D.Double(x, y, cw, 26, 26, 26));
-            g2.setColor(col);
-            g2.fill(new Ellipse2D.Double(x + 11, y + 10, 7, 7));
-            g2.setColor(Theme.ink(col));
-            g2.drawString(t, x + 23, y + 17);
+            int state = (Integer) c[1];
+            boolean done = state == DONE;
+            int cw = fm.stringWidth(t) + (done ? 34 : 22);
+            RoundRectangle2D chip = new RoundRectangle2D.Double(x, y, cw, 26, 6, 6);
+            if (state == TODO) {
+                g2.setColor(Theme.MARKER);
+                g2.fill(chip);
+            } else {
+                g2.setColor(Theme.BG);
+                g2.fill(chip);
+                g2.setColor(state == DONE ? Theme.TEXT : Theme.MUTED);
+                if (state == INFO) {
+                    g2.setStroke(new java.awt.BasicStroke(1.1f, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND, 1f, new float[] { 4f, 3f }, 0f));
+                } else {
+                    Theme.stroke(g2, 1.2f);
+                }
+                g2.draw(chip);
+            }
+            int tx = x + 11;
+            if (done) {
+                java.awt.geom.Path2D check = new java.awt.geom.Path2D.Double();
+                check.moveTo(x + 10, y + 13.5); check.lineTo(x + 13.5, y + 17); check.lineTo(x + 20, y + 9.5);
+                g2.setColor(Theme.TEXT);
+                Theme.stroke(g2, 1.8f);
+                g2.draw(check);
+                tx = x + 25;
+            }
+            g2.setColor(state == INFO ? Theme.MUTED : Theme.TEXT);
+            g2.drawString(t, tx, y + 18);
             x += cw + 8;
         }
     }
@@ -112,13 +135,11 @@ public class Page extends JComponent {
     }
 
     private void paintNote(Graphics2D g2, int x, int y) {
-        Theme.shadow(g2, x, y, 170, 92, 10, 5, 50);
-        g2.setColor(Theme.hex("#FFF4C2"));
-        g2.fill(new RoundRectangle2D.Double(x, y, 170, 92, 10, 10));
-        g2.setColor(Theme.hex("#F9AB00"));
-        g2.fill(new RoundRectangle2D.Double(x, y, 170, 6, 6, 6));
+        Theme.shadow(g2, x, y, 170, 92, 4, 5, 50);
+        g2.setColor(Theme.MARKER_SOFT);
+        g2.fill(new RoundRectangle2D.Double(x, y, 170, 92, 4, 4));
         g2.setFont(Theme.bold(11.5f));
-        g2.setColor(Theme.hex("#5C4300"));
+        g2.setColor(Theme.TEXT);
         g2.drawString(app.profile.name, x + 12, y + 26);
         g2.setFont(Theme.font(12f));
         g2.drawString("Proveriti pre slanja.", x + 12, y + 48);
