@@ -15,7 +15,7 @@ Krajnji korisnici koje intervjuišemo (lekar, developer, bankar u Folio-u) vide 
 
 ## Product Purpose
 
-„PostHog vam kaže šta korisnici rade. Mi ih pitamo zašto, i to svakog o onome što je on uradio.“
+Ime proizvoda: **Because** (znak ∵, matematički „zato što“). „PostHog vam kaže šta korisnici rade. Because ih pita zašto, i to svakog o onome što je on uradio.“
 
 Alat se kači na PostHog, razvrstava korisnike u grupe po ponašanju (kod, ne model), vodi AI intervju zasnovan isključivo na činjenicama koje je izračunao kod, i rezultat vraća u PostHog kao osobine osobe (`ai_main_reason`), pa produkt tim pravi kohorte po razlogu bez koda. Uspeh: produkt tim posle jednog pogleda na grupu zna glavni razlog, ima citat koji ga dokazuje i konkretan predlog promene; žiri pamti „pitali su me o onome što sam upravo uradio“.
 

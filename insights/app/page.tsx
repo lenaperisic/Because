@@ -19,8 +19,8 @@ export default function Home() {
 
   return (
     <main>
-      <h1>Folio · AI intervjui</h1>
-      <p className="lede">PostHog vam kaže šta korisnici rade. Mi ih pitamo zašto, i to svakog o onome što je on uradio.</p>
+      <h1>Grupe korisnika Folio-a</h1>
+      <p className="lede">PostHog vam kaže šta korisnici rade. Because ih pita zašto, i to svakog o onome što je on uradio.</p>
       <p className="muted">
         Izvor: {cache.source === "posthog" ? "PostHog" : "lokalna seed rezerva"} · {cache.people.length} osoba
         {cache.fetchedAt && ` · ${new Date(cache.fetchedAt).toLocaleString("sr-RS")}`} · <RefreshButton />
