@@ -7,7 +7,7 @@ import type { ChatMessage, InterviewRecord, InterviewResult } from "./types";
 const RESULTS_DIR = path.join(process.cwd(), "data", "results");
 const safe = (userId: string) => userId.replace(/[^a-zA-Z0-9_.-]/g, "_");
 
-/** Sačuva rezultat lokalno, pa ga upiše u PostHog. Neuspeh PostHoga ne ruši intervju. */
+/** Saves the result locally, then writes it to PostHog. A PostHog failure does not break the interview. */
 export async function saveInterview(
   result: InterviewResult,
   transcript: ChatMessage[],

@@ -1,7 +1,7 @@
 import type { InterviewResult } from "./types";
 
-// Upis nazad u PostHog: događaj + osobine osobe ($set), preko capture endpointa sa project tokenom.
-// Posle toga produkt tim u PostHogu pravi kohortu po `ai_main_reason` bez ijedne linije koda.
+// Write-back to PostHog: an event + person properties ($set), through the capture endpoint with the project token.
+// After that, the product team builds a cohort on `ai_main_reason` in PostHog without a single line of code.
 
 export type CaptureStatus = { sent: boolean; error?: string };
 
@@ -10,7 +10,7 @@ export function posthogWriteConfigured() {
 }
 
 export async function captureInterview(result: InterviewResult, segmentId: string): Promise<CaptureStatus> {
-  if (!posthogWriteConfigured()) return { sent: false, error: "POSTHOG_KEY nije postavljen" };
+  if (!posthogWriteConfigured()) return { sent: false, error: "POSTHOG_KEY is not set" };
   const host = (process.env.POSTHOG_HOST || "https://eu.i.posthog.com").replace(/\/$/, "");
   const now = new Date().toISOString();
   const body = {

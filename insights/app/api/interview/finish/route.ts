@@ -11,17 +11,17 @@ const Body = z.object({
   messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).max(40),
 });
 
-/** Kraj intervjua: strukturisan rezultat, sačuvan u data/results/<userId>.json. */
+/** End of the interview: a structured result, saved in data/results/<userId>.json. */
 export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: "Neispravan zahtev" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   const { userId, messages } = parsed.data;
   const profile = await getProfile(userId);
-  if (!profile) return NextResponse.json({ error: `Nema osobe ${userId}` }, { status: 404 });
+  if (!profile) return NextResponse.json({ error: `No person ${userId}` }, { status: 404 });
   try {
     const result = await summarize(profile, messages);
     const record = await saveInterview(result, messages, { segmentId: profile.segmentId });
-    // Telo odgovora je InterviewResult (ugovor); status upisa u PostHog ide u zaglavlje.
+    // The response body is InterviewResult (the contract); the PostHog write status goes in a header.
     return NextResponse.json(result, {
       headers: { "X-Posthog": record.posthogSentAt ? "sent" : "skipped" },
     });

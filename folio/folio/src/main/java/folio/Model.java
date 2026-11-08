@@ -12,13 +12,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Podaci PDF alata: profil, dokumenti i koliko je koja funkcija korišćena. Čuva se u folio-data/&lt;id&gt;.json. */
+/** PDF tool data: profile, documents and how often each feature was used. Stored in folio-data/&lt;id&gt;.json. */
 public final class Model {
     private Model() {}
 
-    public static final String[] PROFILE_IDS = { "developer", "lekar", "bankar" };
+    public static final String[] PROFILE_IDS = { "developer", "doctor", "banker" };
 
-    /** Funkcije alata: id, naziv i ikonica. Redosled je redosled u traci sa alatima. */
+    /** Accepts old profile names too (lekar, bankar) so older commands keep working. */
+    public static String profileId(String name) {
+        if (name == null) return "developer";
+        switch (name.trim().toLowerCase()) {
+            case "lekar": return "doctor";
+            case "bankar": return "banker";
+            default: return name.trim().toLowerCase();
+        }
+    }
+
+    /** Tool features: id, label and icon. The order is the order in the toolbar. */
     public static final class Feature {
         public final String id, name;
         public final Widgets.Icon icon;
@@ -27,18 +37,18 @@ public final class Model {
     }
 
     public static final List<Feature> FEATURES = List.of(
-            new Feature("read", "Čitanje", Widgets.Icon.EYE),
-            new Feature("search", "Pretraga", Widgets.Icon.SEARCH),
-            new Feature("annotate", "Komentar", Widgets.Icon.COMMENT),
-            new Feature("sign", "Potpis", Widgets.Icon.SIGN),
-            new Feature("fill_form", "Formular", Widgets.Icon.FORM),
+            new Feature("read", "Read", Widgets.Icon.EYE),
+            new Feature("search", "Search", Widgets.Icon.SEARCH),
+            new Feature("annotate", "Comment", Widgets.Icon.COMMENT),
+            new Feature("sign", "Sign", Widgets.Icon.SIGN),
+            new Feature("fill_form", "Fill form", Widgets.Icon.FORM),
             new Feature("ocr", "OCR", Widgets.Icon.SCAN),
-            new Feature("redact", "Zacrni", Widgets.Icon.REDACT),
-            new Feature("compare", "Uporedi", Widgets.Icon.COMPARE),
-            new Feature("merge", "Spoji", Widgets.Icon.MERGE),
-            new Feature("compress", "Kompresuj", Widgets.Icon.COMPRESS),
-            new Feature("export_text", "Izvezi tekst", Widgets.Icon.EXPORT),
-            new Feature("ai_summary", "AI sažetak", Widgets.Icon.SPARK));
+            new Feature("redact", "Redact", Widgets.Icon.REDACT),
+            new Feature("compare", "Compare", Widgets.Icon.COMPARE),
+            new Feature("merge", "Merge", Widgets.Icon.MERGE),
+            new Feature("compress", "Compress", Widgets.Icon.COMPRESS),
+            new Feature("export_text", "Export text", Widgets.Icon.EXPORT),
+            new Feature("ai_summary", "AI summary", Widgets.Icon.SPARK));
 
     public static Feature feature(String id) {
         for (Feature f : FEATURES) if (f.id.equals(id)) return f;
@@ -51,7 +61,7 @@ public final class Model {
         public int pages;
         public boolean scanned, signed, filled, redacted, ocr, annotated;
         public List<String> summary = new ArrayList<>();
-        public List<String[]> changes = new ArrayList<>();      // {"+" ili "-", tekst}
+        public List<String[]> changes = new ArrayList<>();      // {"+" or "-", text}
         public List<Map<String, Object>> blocks = new ArrayList<>();
 
         public boolean has(String blockType) {
@@ -91,7 +101,7 @@ public final class Model {
         }
     }
 
-    // ---------------- učitavanje i čuvanje ----------------
+    // ---------------- loading and saving ----------------
 
     public static Path dataDir() { return Paths.get(System.getProperty("folio.data", "folio-data")); }
 
@@ -103,7 +113,7 @@ public final class Model {
                 text = Files.readString(file, StandardCharsets.UTF_8);
             } else {
                 try (InputStream in = Model.class.getResourceAsStream("/data/" + id + ".json")) {
-                    if (in == null) throw new IOException("Nema podataka za profil " + id);
+                    if (in == null) throw new IOException("No data for profile " + id);
                     text = new String(in.readAllBytes(), StandardCharsets.UTF_8);
                 }
                 Files.createDirectories(dataDir());
@@ -111,7 +121,7 @@ public final class Model {
             }
             return fromJson(Json.parse(text));
         } catch (IOException ex) {
-            throw new RuntimeException("Ne mogu da učitam profil " + id + ": " + ex.getMessage(), ex);
+            throw new RuntimeException("Cannot load profile " + id + ": " + ex.getMessage(), ex);
         }
     }
 
@@ -120,7 +130,7 @@ public final class Model {
             Files.createDirectories(dataDir());
             Files.writeString(dataDir().resolve(p.id + ".json"), Json.write(toJson(p)), StandardCharsets.UTF_8);
         } catch (IOException ex) {
-            System.err.println("Čuvanje nije uspelo: " + ex.getMessage());
+            System.err.println("Save failed: " + ex.getMessage());
         }
     }
 

@@ -5,13 +5,13 @@ import { cleanQuote, personCount } from "./format";
 
 type Props = {
   segmentId: string;
-  /** Menja se kad se rezultati grupe promene; tada se sinteza povlači ponovo. */
+  /** Changes when the group's results change; the synthesis is fetched again then. */
   version: string;
-  /** Broj intervjua u grupi (sa servera). */
+  /** Number of interviews in the group (from the server). */
   interviews: number;
 };
 
-/** Zaključak: prva rečenica je naslov, ostatak ide ispod u normalnoj veličini. */
+/** Takeaway: the first sentence is the headline, the rest goes below at normal size. */
 function Takeaway({ text }: { text: string }) {
   const m = text.trim().match(/^(.+?[.!?])\s+(\S[\s\S]*)$/);
   return (
@@ -22,7 +22,7 @@ function Takeaway({ text }: { text: string }) {
   );
 }
 
-/** Sinteza razloga (Claude). Povlači se posle učitavanja, da strana ne čeka model. */
+/** Reason synthesis (Claude). Fetched after loading, so the page doesn't wait for the model. */
 export default function Synthesis({ segmentId, version, interviews }: Props) {
   const [data, setData] = useState<SynthesisData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ export default function Synthesis({ segmentId, version, interviews }: Props) {
     } catch (e) {
       if (!ctrl.signal.aborted) setError(e instanceof Error ? e.message : String(e));
     } finally {
-      // Samo poslednji zahtev gasi „Pravim...“; prekinut zahtev je već zamenjen novim.
+      // Only the latest request turns off "Synthesizing..."; an aborted request has already been replaced.
       if (inFlight.current === ctrl) {
         inFlight.current = null;
         setLoading(false);
@@ -65,8 +65,8 @@ export default function Synthesis({ segmentId, version, interviews }: Props) {
   if (interviews === 0) {
     return (
       <section className="card synthesis">
-        <h2>Sinteza razloga (Claude)</h2>
-        <p className="muted">Sinteza se pravi kad grupa ima bar jedan intervju.</p>
+        <h2>Reason synthesis (Claude)</h2>
+        <p className="muted">The synthesis is created once the group has at least one interview.</p>
       </section>
     );
   }
@@ -74,30 +74,30 @@ export default function Synthesis({ segmentId, version, interviews }: Props) {
   return (
     <section className="card synthesis">
       <div className="synthesis-head">
-        <h2>Sinteza razloga (Claude)</h2>
+        <h2>Reason synthesis (Claude)</h2>
         <button className="secondary" onClick={() => load(true)} disabled={loading}>
-          {loading ? "Pravim sintezu..." : "Napravi ponovo"}
+          {loading ? "Synthesizing..." : "Regenerate"}
         </button>
       </div>
-      {!data && loading && <p className="muted">Pravim sintezu iz intervjua, to traje do 20-ak sekundi...</p>}
-      {error && <p className="error">{data ? "Nova sinteza nije uspela, prikazana je prethodna: " : "Sinteza nije uspela: "}{error}</p>}
+      {!data && loading && <p className="muted">Synthesizing the interviews, this takes up to about 20 seconds...</p>}
+      {error && <p className="error">{data ? "The new synthesis failed; showing the previous one: " : "Synthesis failed: "}{error}</p>}
       {data && data.takeaway && <Takeaway text={data.takeaway} />}
       {data && (
         <p className="muted">
-          Na osnovu {data.basedOn} intervjua
+          Based on {data.basedOn} {data.basedOn === 1 ? "interview" : "interviews"}
           {data.simulatedCount > 0 && (
-            <> · <span className="pill sim">{data.simulatedCount === data.basedOn ? "svi simulirani" : `simulirano: ${data.simulatedCount}`}</span></>
+            <> · <span className="pill sim">{data.simulatedCount === data.basedOn ? "all simulated" : `simulated: ${data.simulatedCount}`}</span></>
           )}
         </p>
       )}
-      {data && data.themes.length === 0 && <p className="muted">Model nije izdvojio teme.</p>}
+      {data && data.themes.length === 0 && <p className="muted">The model found no themes.</p>}
       {data && data.themes.length > 0 && (
         <div className="themes">
           {data.themes.map((t, i) => (
             <div key={`${i}|${t.title}`} className="theme">
               <b>{t.title}</b> <span className="pill">{personCount(t.count)}</span>
               {t.quotes.map(cleanQuote).filter(Boolean).map((q, j) => (
-                <blockquote key={`${j}|${q}`} className="quote"><span className="qm" aria-hidden="true">„</span>{q}“</blockquote>
+                <blockquote key={`${j}|${q}`} className="quote"><span className="qm" aria-hidden="true">“</span>{q}”</blockquote>
               ))}
             </div>
           ))}

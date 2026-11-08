@@ -1,0 +1,139 @@
+{
+  "id": "banker",
+  "name": "Jelena Marković",
+  "role": "Banker",
+  "title": "Corporate relationship manager · Delta Bank",
+  "color": "#0F9D58",
+  "usage": {
+    "read": 238, "search": 61, "annotate": 74, "sign": 92, "fill_form": 38, "ocr": 44,
+    "redact": 121, "compare": 87, "merge": 52, "compress": 19, "export_text": 3, "ai_summary": 14
+  },
+  "documents": [
+    {
+      "id": "bnk-doc-1", "name": "Loan agreement · Danube Logistics (v3).pdf", "kind": "Contract", "color": "#4285F4",
+      "pages": 24, "size": "1.6 MB", "updated": "today, 11:05",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Investment loan of EUR 4,200,000 over 7 years.",
+        "Interest: 3M EURIBOR + 2.4%, 12-month grace period.",
+        "Collateral: a mortgage on the warehouse and promissory notes.",
+        "Version 3 changes the leverage covenant and the first drawdown deadline."
+      ],
+      "changes": [
+        { "type": "-", "text": "Net debt to EBITDA must not exceed 3.0x." },
+        { "type": "+", "text": "Net debt to EBITDA must not exceed 3.5x." },
+        { "type": "-", "text": "First drawdown no later than 31 December 2026." },
+        { "type": "+", "text": "First drawdown no later than 31 March 2027." }
+      ],
+      "blocks": [
+        { "type": "letterhead", "org": "Delta Bank, Belgrade", "sub": "Corporate Banking Division" },
+        { "type": "title", "text": "Investment loan agreement No. 2026-0412" },
+        { "type": "meta", "items": [
+          { "label": "Borrower", "value": "Danube Logistics Ltd." },
+          { "label": "Registration number", "value": "21455870" },
+          { "label": "Amount", "value": "EUR 4,200,000.00" },
+          { "label": "Repayment term", "value": "84 months" }
+        ] },
+        { "type": "h2", "text": "Article 4. Interest" },
+        { "type": "p", "text": "A variable interest rate equal to 3M EURIBOR plus a margin of 2.4% per year is charged on the drawn amount of the loan." },
+        { "type": "h2", "text": "Article 9. Financial covenants" },
+        { "type": "p", "text": "The Borrower undertakes that, for the term of the agreement, the ratio of net debt to EBITDA will not exceed 3.5x, measured at the end of each financial year." },
+        { "type": "signature", "signers": ["For the Bank", "For the Borrower"] }
+      ]
+    },
+    {
+      "id": "bnk-doc-2", "name": "KYC · Tech Hub Ltd.pdf", "kind": "Form", "color": "#FA7B17",
+      "pages": 5, "size": "420 KB", "updated": "yesterday, 16:12",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Know-your-customer questionnaire for a new legal entity.",
+        "Beneficial owner: Ivana Radić, 100% stake.",
+        "The client is not a politically exposed person; risk assessed as low."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Delta Bank, Belgrade", "sub": "Compliance Department" },
+        { "type": "title", "text": "Know your customer questionnaire (KYC)" },
+        { "type": "form", "fields": [
+          { "label": "Company name", "value": "Tech Hub Ltd., Belgrade" },
+          { "label": "Registration no. / Tax ID", "value": "21877012 / 113402871" },
+          { "label": "Beneficial owner", "value": "Ivana Radić · 100%" },
+          { "label": "Main activity", "value": "6201 · Computer programming" },
+          { "label": "Expected monthly turnover", "value": "EUR 200,000 – 500,000" },
+          { "label": "Politically exposed person (PEP)", "value": "No" }
+        ] },
+        { "type": "signature", "signers": ["Authorized bank officer"] }
+      ]
+    },
+    {
+      "id": "bnk-doc-3", "name": "Balance sheet · Metal Pro 2025.pdf", "kind": "Financials", "color": "#12B5CB",
+      "pages": 8, "size": "760 KB", "updated": "Nov 4",
+      "scanned": false, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Total assets of EUR 18.4 million, up 12% on 2024.",
+        "Current liabilities are growing faster than current assets.",
+        "Net debt / EBITDA is 2.8x, below the 3.5x limit."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Metal Pro Ltd., Novi Sad", "sub": "Financial statements for 2025" },
+        { "type": "title", "text": "Balance sheet as of 31 December 2025" },
+        { "type": "table", "headers": ["Item", "2025 (EUR 000)", "2024 (EUR 000)"], "rows": [
+          ["Non-current assets", "11,240", "10,410"],
+          ["Current assets", "7,180", "6,020"],
+          ["Total assets", "18,420", "16,430"],
+          ["Equity", "7,960", "7,310"],
+          ["Long-term liabilities", "6,110", "5,880"],
+          ["Current liabilities", "!4,350", "3,240"]
+        ] },
+        { "type": "p", "text": "Current liabilities rose by 34%, mainly because of raw material suppliers. A maturity-matching review is recommended before approving a new loan." }
+      ]
+    },
+    {
+      "id": "bnk-doc-4", "name": "ID card · director (scan).pdf", "kind": "Scan", "color": "#9AA0A6",
+      "pages": 1, "size": "2.9 MB", "updated": "yesterday, 15:58",
+      "scanned": true, "signed": false, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Scanned ID card of the legal representative.",
+        "The document is valid until 2031.",
+        "The details match the business registry."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Republic of Serbia", "sub": "ID card · scan for the client file" },
+        { "type": "title", "text": "Identity card" },
+        { "type": "meta", "items": [
+          { "label": "Full name", "value": "Nenad Jović", "sensitive": true },
+          { "label": "Personal ID no.", "value": "1707979800014", "sensitive": true },
+          { "label": "Document number", "value": "009412778", "sensitive": true },
+          { "label": "Valid until", "value": "12 May 2031" }
+        ] },
+        { "type": "p", "text": "This copy was made to identify the client's legal representative, as required by the Anti-Money Laundering Act." }
+      ]
+    },
+    {
+      "id": "bnk-doc-5", "name": "Credit proposal for the committee.pdf", "kind": "Report", "color": "#A142F4",
+      "pages": 12, "size": "1.2 MB", "updated": "Nov 3",
+      "scanned": false, "signed": true, "filled": false, "redacted": false, "ocr": false, "annotated": false,
+      "summary": [
+        "Proposal to approve the Danube Logistics loan, EUR 4.2 million.",
+        "The client has banked with us since 2014 with no late payments.",
+        "Recommendation: approve with a mortgage and a 3.5x covenant."
+      ],
+      "changes": [],
+      "blocks": [
+        { "type": "letterhead", "org": "Delta Bank, Belgrade", "sub": "Credit Committee · meeting of 10 Nov 2026" },
+        { "type": "title", "text": "Loan approval proposal" },
+        { "type": "meta", "items": [
+          { "label": "Client", "value": "Danube Logistics Ltd." },
+          { "label": "Amount", "value": "EUR 4,200,000" },
+          { "label": "Rating", "value": "B+" },
+          { "label": "Proposed by", "value": "Jelena Marković" }
+        ] },
+        { "type": "h2", "text": "Rationale" },
+        { "type": "p", "text": "The client has banked with us since 2014 without a single late payment. The loan finances a new warehouse in Šimanovci, which increases capacity by 40%." },
+        { "type": "signature", "signers": ["Corporate relationship manager"] }
+      ]
+    }
+  ]
+}

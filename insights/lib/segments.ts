@@ -1,73 +1,73 @@
 import { daysAgo, getStats, listUserIds, triedAndQuit, type UserStats } from "./facts";
 import type { EventCache, Segment } from "./types";
 
-// Razvrstavanje u 5 grupa po PONAŠANJU (ne po ulozi, bez demografije). Grupe pravi kod;
-// Claude kasnije (faza 2) samo daje ime i formuliše istraživačko pitanje.
+// Sorting into 5 groups by BEHAVIOR (not by role, no demographics). Code builds the groups;
+// Claude later (phase 2) only names them and phrases the research question.
 
-export type SegmentId = "potpisivaci" | "citaci" | "uskladjenost" | "probali_ai" | "novi";
+export type SegmentId = "signers" | "readers" | "compliance" | "tried_ai" | "new";
 
 export const SEGMENT_DEFS: Record<SegmentId, Omit<Segment, "userIds">> = {
-  potpisivaci: {
-    id: "potpisivaci",
-    name: "Potpisivači",
-    why: "Potpis i formular su više od polovine upotrebe alata.",
-    researchQuestion: "Šta im oduzima najviše vremena i zašto ne koriste AI sažetak?",
+  signers: {
+    id: "signers",
+    name: "Signers",
+    why: "Signing and forms make up more than half of their tool use.",
+    researchQuestion: "What takes up most of their time, and why don't they use the AI summary?",
   },
-  citaci: {
-    id: "citaci",
-    name: "Čitači i pretraživači",
-    why: "Pretraga i izvoz u tekst dominiraju, potpisa skoro da nema.",
-    researchQuestion: "Šta traže u dokumentima, a ne nalaze?",
+  readers: {
+    id: "readers",
+    name: "Readers and searchers",
+    why: "Search and text export dominate; they almost never sign.",
+    researchQuestion: "What are they looking for in documents that they can't find?",
   },
-  uskladjenost: {
-    id: "uskladjenost",
-    name: "Usklađenost",
-    why: "Zacrnjivanje i poređenje verzija dominiraju.",
-    researchQuestion: "Šta im fali u poređenju verzija i zacrnjivanju?",
+  compliance: {
+    id: "compliance",
+    name: "Compliance",
+    why: "Redaction and version comparison dominate.",
+    researchQuestion: "What is missing for them in version comparison and redaction?",
   },
-  probali_ai: {
-    id: "probali_ai",
-    name: "Probali AI pa odustali",
-    why: "AI sažetak korišćen 1 do 2 puta, poslednji put pre više od 14 dana, bez obzira na ulogu.",
-    researchQuestion: "Šta nije valjalo sa AI sažetkom kad su ga probali?",
+  tried_ai: {
+    id: "tried_ai",
+    name: "Tried AI, then quit",
+    why: "Used the AI summary once or twice, last time more than 14 days ago, regardless of role.",
+    researchQuestion: "What went wrong with the AI summary when they tried it?",
   },
-  novi: {
-    id: "novi",
-    name: "Novi i neaktivni",
-    why: "Manje od 10 upotreba alata ili prvi dolazak u poslednjih 7 dana, bez jasnog obrasca.",
-    researchQuestion: "Šta su očekivali od alata kad su počeli da ga koriste?",
+  new: {
+    id: "new",
+    name: "New and inactive",
+    why: "Fewer than 10 tool uses or a first visit in the last 7 days, with no clear pattern.",
+    researchQuestion: "What did they expect from the tool when they started using it?",
   },
 };
 
-export const SEGMENT_ORDER: SegmentId[] = ["potpisivaci", "citaci", "uskladjenost", "probali_ai", "novi"];
+export const SEGMENT_ORDER: SegmentId[] = ["signers", "readers", "compliance", "tried_ai", "new"];
 
 const n = (s: UserStats, f: string) => s.counts[f]?.n ?? 0;
 
 /**
- * Pravila, redom:
- * 1. Probali AI pa odustali (preseca uloge).
- * 2. Novi i neaktivni: malo upotreba ili nov, a nema dominantnog obrasca (>50%).
- *    Nova osoba koja je već jasno potpisivač (npr. demo uživo) ide u Potpisivače.
- * 3. Grupa sa udelom > 50%, inače grupa sa najvećim udelom.
+ * Rules, in order:
+ * 1. Tried AI, then quit (cuts across roles).
+ * 2. New and inactive: few uses or new, with no dominant pattern (>50%).
+ *    A new person who is already clearly a signer (e.g. the live demo) goes to Signers.
+ * 3. The group with a share > 50%, otherwise the group with the largest share.
  */
 export function classify(s: UserStats, now = Date.now()): { segmentId: SegmentId; why: string } {
-  if (triedAndQuit(s, "ai_summary", now)) return { segmentId: "probali_ai", why: SEGMENT_DEFS.probali_ai.why };
+  if (triedAndQuit(s, "ai_summary", now)) return { segmentId: "tried_ai", why: SEGMENT_DEFS.tried_ai.why };
 
   const total = Math.max(1, s.total);
   const shares: [SegmentId, number][] = [
-    ["potpisivaci", (n(s, "sign") + n(s, "fill_form")) / total],
-    ["citaci", (n(s, "search") + n(s, "export_text")) / total],
-    ["uskladjenost", (n(s, "redact") + n(s, "compare")) / total],
+    ["signers", (n(s, "sign") + n(s, "fill_form")) / total],
+    ["readers", (n(s, "search") + n(s, "export_text")) / total],
+    ["compliance", (n(s, "redact") + n(s, "compare")) / total],
   ];
   shares.sort((a, b) => b[1] - a[1]);
   const [topId, topShare] = shares[0];
   const pct = Math.round(topShare * 100);
 
   const isNew = s.total < 10 || daysAgo(s.firstSeen, now) < 7;
-  if (isNew && topShare <= 0.5) return { segmentId: "novi", why: SEGMENT_DEFS.novi.why };
-  if (s.total === 0) return { segmentId: "novi", why: SEGMENT_DEFS.novi.why };
+  if (isNew && topShare <= 0.5) return { segmentId: "new", why: SEGMENT_DEFS.new.why };
+  if (s.total === 0) return { segmentId: "new", why: SEGMENT_DEFS.new.why };
 
-  return { segmentId: topId, why: `${SEGMENT_DEFS[topId].why} (${pct}% upotreba)` };
+  return { segmentId: topId, why: `${SEGMENT_DEFS[topId].why} (${pct}% of tool uses)` };
 }
 
 export function buildSegments(cache: EventCache, now = Date.now()): Segment[] {

@@ -1,7 +1,7 @@
-// Sinteza razloga po grupi (Claude), sa kešom u data/synthesis/<grupa>.json.
-//   npm run synthesize                         # sve grupe (iz keša ako se rezultati nisu menjali)
-//   npm run synthesize -- --segment probali_ai # jedna grupa
-//   npm run synthesize -- --force              # ponovo, bez keša
+// Reason synthesis per group (Claude), cached in data/synthesis/<group>.json.
+//   npm run synthesize                        # all groups (from the cache if the results haven't changed)
+//   npm run synthesize -- --segment tried_ai  # one group
+//   npm run synthesize -- --force             # again, skipping the cache
 import { loadEnv } from "../lib/env";
 loadEnv();
 
@@ -17,10 +17,10 @@ const ONLY = arg("segment");
 const FORCE = process.argv.includes("--force");
 
 async function main() {
-  if (ONLY && !SEGMENT_ORDER.includes(ONLY as never)) throw new Error(`Nema grupe ${ONLY}. Grupe: ${SEGMENT_ORDER.join(", ")}`);
+  if (ONLY && !SEGMENT_ORDER.includes(ONLY as never)) throw new Error(`No group ${ONLY}. Groups: ${SEGMENT_ORDER.join(", ")}`);
   const ids = ONLY ? SEGMENT_ORDER.filter((id) => id === ONLY) : SEGMENT_ORDER;
-  console.log(`Model preko: ${provider()} · grupa: ${ids.length}${FORCE ? " · bez keša" : ""}`);
-  // Grupe paralelno, ispis redom.
+  console.log(`Model via: ${provider()} · groups: ${ids.length}${FORCE ? " · skipping cache" : ""}`);
+  // Groups in parallel, printed in order.
   const results = await Promise.allSettled(ids.map((id) => synthesizeSegment(id, { force: FORCE })));
   let failed = 0;
   results.forEach((r, i) => {
@@ -31,11 +31,11 @@ async function main() {
       return;
     }
     const s = r.value;
-    console.log(`\n## ${name} · ${s.basedOn} intervjua${s.simulatedCount ? ` (simulirano: ${s.simulatedCount})` : ""}`);
-    if (s.basedOn === 0) return console.log("   još nema intervjua");
+    console.log(`\n## ${name} · ${s.basedOn} interviews${s.simulatedCount ? ` (simulated: ${s.simulatedCount})` : ""}`);
+    if (s.basedOn === 0) return console.log("   no interviews yet");
     for (const t of s.themes) {
       console.log(`   ${t.count} × ${t.title}`);
-      for (const q of t.quotes) console.log(`        „${q}“`);
+      for (const q of t.quotes) console.log(`        “${q}”`);
     }
     console.log(`   → ${s.takeaway}`);
   });

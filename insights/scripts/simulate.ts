@@ -1,18 +1,19 @@
-// Simulirani intervjui za sintezu po grupi. Drugi Claude igra korisnika sa SKRIVENIM razlogom;
-// intervjuer je isti kao uživo (lib/interview.ts). Svaki rezultat ima simulated: true.
+// Simulated interviews for the per-group synthesis. A second Claude plays a user with a HIDDEN reason;
+// the interviewer is the same as live (lib/interview.ts). Every result has simulated: true.
 //
-//   npm run simulate -- --per 8                  # 8 po grupi (5 grupa = 40 intervjua)
-//   npm run simulate -- --per 1 --segment novi   # brza proba
-//   npm run simulate -- --per 8 --no-posthog     # bez upisa u PostHog
-//   npm run simulate -- --per 8 --overwrite      # ponovi i za osobe koje već imaju rezultat
+//   npm run simulate -- --per 8                 # 8 per group (5 groups = 40 interviews)
+//   npm run simulate -- --per 1 --segment new   # quick test
+//   npm run simulate -- --per 8 --no-posthog    # without writing to PostHog
+//   npm run simulate -- --per 8 --overwrite     # redo people who already have a result
 //
-// Na kraju ispiše koliko često je glavni razlog pogođen (poređenje sa skrivenim razlogom).
+// At the end it prints how often the main reason was hit (compared with the hidden reason).
 
 import { loadEnv } from "../lib/env";
 loadEnv();
 
 const { buildProfile } = await import("../lib/facts");
 const { loadCache } = await import("../lib/posthog");
+const { isSample } = await import("../lib/sample");
 const { buildSegments, SEGMENT_DEFS } = await import("../lib/segments");
 const { CONSENT_MESSAGE, nextReply, summarize, MAX_QUESTIONS } = await import("../lib/interview");
 const { complete, provider } = await import("../lib/llm");
@@ -31,55 +32,55 @@ const CONCURRENCY = Number(arg("parallel", "3"));
 const SEND = !process.argv.includes("--no-posthog");
 const OVERWRITE = process.argv.includes("--overwrite");
 
-// Skriveni razlozi po grupi: raznovrsni, da sinteza ima šta da grupiše. Neke osobe dele razlog.
+// Hidden reasons per group: varied, so the synthesis has something to group. Some people share a reason.
 const HIDDEN: Record<SegmentId, string[]> = {
-  potpisivaci: [
-    "Ne veruješ AI sažetku za nalaze: ako promaši jednu vrednost, odgovornost je tvoja, pa ionako sve čitaš.",
-    "Najviše vremena ti odnosi ručno prepisivanje podataka pacijenta u uput; AI sažetak ti ne rešava to.",
-    "Nisi ni znao/la da AI sažetak postoji; dugme ti se nikad nije istaklo.",
-    "Bolnička politika ne dozvoljava slanje nalaza u AI alate zbog privatnosti podataka.",
-    "Potpisivanje traje jer svaki dokument moraš posebno da otvoriš; želiš da potpišeš više odjednom.",
+  signers: [
+    "You don't trust the AI summary for lab reports: if it misses a single value, you are the one responsible, so you read everything anyway.",
+    "Most of your time goes into retyping patient details into referrals by hand; the AI summary doesn't help with that.",
+    "You didn't even know the AI summary existed; the button never caught your eye.",
+    "Hospital policy doesn't allow sending patient reports to AI tools because of data privacy.",
+    "Signing takes long because you have to open every document separately; you want to sign several at once.",
   ],
-  citaci: [
-    "Pretraga ne nalazi pojmove u tabelama i skeniranim delovima, pa izvoziš tekst i tražiš u editoru.",
-    "Treba ti pretraga kroz više dokumenata odjednom, a Folio traži samo u jednom.",
-    "Izvoz u tekst ti kvari formatiranje koda i tabela, pa gubiš vreme na sređivanje.",
-    "Probao/la bi AI sažetak, ali želiš odgovore na konkretna pitanja o dokumentu, ne opšti sažetak.",
+  readers: [
+    "Search doesn't find terms in tables and scanned pages, so you export the text and search in an editor.",
+    "You need to search across several documents at once, but Folio only searches one.",
+    "Text export breaks the formatting of code and tables, so you waste time cleaning it up.",
+    "You would try the AI summary, but you want answers to specific questions about the document, not a general summary.",
   ],
-  uskladjenost: [
-    "Poređenje verzija ne pokazuje izmene u tabelama i brojevima, a tu su najvažnije promene ugovora.",
-    "Zacrnjivanje moraš ručno na svakoj strani; želiš automatsko pronalaženje JMBG-a i brojeva računa.",
-    "Revizija traži dokaz šta je zacrnjeno i ko je to uradio, a Folio to ne beleži.",
-    "Poređenje ne radi kad je jedna verzija sken, pa porediš ručno.",
+  compliance: [
+    "Version comparison doesn't show changes in tables and numbers, and that is where the most important contract changes are.",
+    "You have to redact by hand on every page; you want it to find personal ID numbers and account numbers automatically.",
+    "Auditors ask for proof of what was redacted and who did it, and Folio doesn't record that.",
+    "Comparison doesn't work when one version is a scan, so you compare by hand.",
   ],
-  probali_ai: [
-    "AI sažetak je izmislio podatak koji nije bio u dokumentu, i od tada mu ne veruješ.",
-    "Sažetak je bio previše opšti i dug; brže ti je da sam/a preletiš dokument.",
-    "Sažetak je bio na engleskom ili lošem srpskom.",
-    "Sporo se učitavao (pola minuta), pa si odustao/la.",
+  tried_ai: [
+    "The AI summary made up a detail that wasn't in the document, and you haven't trusted it since.",
+    "The summary was too generic and too long; it's faster to skim the document yourself.",
+    "The summary got the terminology wrong and read like a bad machine translation.",
+    "It took half a minute to load, so you gave up.",
   ],
-  novi: [
-    "Očekivao/la si jednostavan čitač; previše alata te zbunjuje i ne znaš odakle da kreneš.",
-    "Koristiš Folio samo za čitanje skripti; komentari su ti dovoljni i ne treba ti više.",
-    "Prešao/la si sa drugog alata i tražiš prečice na koje si navikao/la, a nema ih.",
-    "Nemaš puno PDF posla ovog meseca; nije problem u alatu.",
+  new: [
+    "You expected a simple reader; too many tools confuse you and you don't know where to start.",
+    "You only use Folio to read lecture notes; comments are enough and you don't need more.",
+    "You switched from another tool and look for the shortcuts you're used to, but they aren't there.",
+    "You don't have much PDF work this month; the problem isn't the tool.",
   ],
 };
 
 function personaPrompt(profile: Profile, hidden: string) {
   const facts = profile.facts.map((f) => `- ${f.text}`).join("\n");
-  return `Igraš korisnika PDF alata Folio u intervjuu koji vodi AI istraživač. Odgovaraš na srpskom (latinica), kao stvarna osoba: kratko (1–3 rečenice), ponekad neprecizno, bez nabrajanja i bez formatiranja.
+  return `You are playing a user of the Folio PDF tool in an interview run by an AI researcher. Answer in English, like a real person: briefly (1–3 sentences), sometimes vaguely, without lists and without formatting.
 
-Tvoja uloga: ${profile.role}.
-Šta si zaista radio/la u alatu (ne moraš sve da pominješ):
+Your role: ${profile.role}.
+What you actually did in the tool (you don't have to mention all of it):
 ${facts}
 
-Tvoj pravi razlog (ne izgovaraj ga odmah doslovno; otkrivaj ga postepeno, kad te pitaju pravo pitanje): ${hidden}
+Your real reason (don't say it word for word right away; reveal it gradually, when you are asked the right question): ${hidden}
 
-Na pristanak odgovori potvrdno. Ne izmišljaj aktivnosti koje se kose sa činjenicama. Ne govori da si AI.`;
+Agree when asked for consent. Don't invent activities that contradict the facts. Don't say you are an AI.`;
 }
 
-/** Istorija iz ugla persone: intervjuer je „user“, persona „assistant“. */
+/** History from the persona's point of view: the interviewer is "user", the persona is "assistant". */
 function personaTurns(history: ChatMessage[]) {
   return [
     { role: "user" as const, content: CONSENT_MESSAGE },
@@ -102,7 +103,7 @@ async function runOne(profile: Profile, hidden: string) {
   return { result, record, turns: history.length };
 }
 
-/** Grubo: da li glavni razlog deli bar dve značajne reči sa skrivenim razlogom. Za brz pregled, nije metrika. */
+/** Rough: does the main reason share at least two meaningful words with the hidden reason. For a quick look, not a metric. */
 function roughlyMatches(mainReason: string, hidden: string) {
   const words = (s: string) => new Set(s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").match(/[a-z]{5,}/g) ?? []);
   const a = words(mainReason), b = words(hidden);
@@ -117,13 +118,13 @@ async function main() {
   for (const seg of buildSegments(cache)) {
     if (ONLY && seg.id !== ONLY) continue;
     const reasons = HIDDEN[seg.id as SegmentId];
-    const candidates = seg.userIds.filter((id) => id.startsWith("seed_") && (OVERWRITE || !loadInterview(id)));
+    const candidates = seg.userIds.filter((id) => isSample(id) && (OVERWRITE || !loadInterview(id)));
     candidates.slice(0, PER).forEach((id, i) => {
       const profile = buildProfile(cache, id);
       if (profile) jobs.push({ profile, hidden: reasons[i % reasons.length] });
     });
   }
-  console.log(`Model preko: ${provider()} · ${jobs.length} intervjua · paralelno ${CONCURRENCY} · PostHog: ${SEND ? "da" : "ne"}`);
+  console.log(`Model via: ${provider()} · ${jobs.length} interviews · ${CONCURRENCY} in parallel · PostHog: ${SEND ? "yes" : "no"}`);
 
   let ok = 0, failed = 0, matched = 0;
   const queue = [...jobs];
@@ -135,7 +136,7 @@ async function main() {
         const { result, record, turns } = await runOne(job.profile, job.hidden);
         const hit = roughlyMatches(result.mainReason, job.hidden);
         ok++; if (hit) matched++;
-        console.log(`✓ ${name} · ${turns} poruka · ${Math.round((Date.now() - t) / 1000)} s · PostHog: ${record.posthogSentAt ? "da" : "ne"}${hit ? "" : " · razlog se razlikuje"}\n    razlog: ${result.mainReason}\n    skriveno: ${job.hidden}`);
+        console.log(`✓ ${name} · ${turns} messages · ${Math.round((Date.now() - t) / 1000)} s · PostHog: ${record.posthogSentAt ? "yes" : "no"}${hit ? "" : " · reason differs"}\n    reason: ${result.mainReason}\n    hidden: ${job.hidden}`);
       } catch (e) {
         failed++;
         console.error(`✗ ${name}: ${e instanceof Error ? e.message : e}`);
@@ -143,7 +144,7 @@ async function main() {
     }
   }
   await Promise.all(Array.from({ length: Math.max(1, CONCURRENCY) }, worker));
-  console.log(`\nGotovo: ${ok} uspešno, ${failed} neuspešno. Glavni razlog grubo pogođen u ${matched}/${ok} (proverite ručno one koji se razlikuju).`);
+  console.log(`\nDone: ${ok} succeeded, ${failed} failed. Main reason roughly hit in ${matched}/${ok} (check the ones that differ by hand).`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

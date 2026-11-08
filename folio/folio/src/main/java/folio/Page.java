@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Random;
 import javax.swing.JComponent;
 
-/** Crta prvu stranu dokumenta kao pravi PDF, sa stanjem: potpis, zacrnjeno, popunjeno, OCR, komentar. */
+/** Draws the first page of the document like a real PDF, with its state: signature, redaction, filled form, OCR, comment. */
 public class Page extends JComponent {
     static final int PW = 620, PH = 877, M = 58;
     static final Color CANVAS = Theme.hex("#E9E9E9");
@@ -61,21 +61,21 @@ public class Page extends JComponent {
 
         g2.setFont(Theme.font(12f));
         g2.setColor(Theme.FAINT);
-        String foot = "Strana 1 od " + d.pages;
+        String foot = "Page 1 of " + d.pages;
         FontMetrics fm = g2.getFontMetrics();
         g2.drawString(foot, (w - fm.stringWidth(foot)) / 2f, py + PH + 30);
         g2.dispose();
     }
 
     private void paintChips(Graphics2D g2, Model.Doc d, int x, int y) {
-        // Tri stanja: ČEKA (marker, posao za korisnika), GOTOVO (obod + kvačica), INFO (isprekidan obod).
+        // Three states: TODO (marker, a task for the user), DONE (outline + check mark), INFO (dashed outline).
         final int TODO = 0, DONE = 1, INFO = 2;
         List<Object[]> chips = new ArrayList<>();
-        if (d.has("signature")) chips.add(d.signed ? new Object[] { "Potpisano", DONE } : new Object[] { "Čeka potpis", TODO });
-        if (d.scanned) chips.add(d.ocr ? new Object[] { "Tekst prepoznat (OCR)", DONE } : new Object[] { "Sken bez teksta", INFO });
-        if (d.has("form")) chips.add(d.filled ? new Object[] { "Formular popunjen", DONE } : new Object[] { "Prazan formular", TODO });
-        if (d.hasSensitive()) chips.add(d.redacted ? new Object[] { "Lični podaci zacrnjeni", DONE } : new Object[] { "Sadrži lične podatke", TODO });
-        if (d.annotated) chips.add(new Object[] { "1 komentar", INFO });
+        if (d.has("signature")) chips.add(d.signed ? new Object[] { "Signed", DONE } : new Object[] { "Awaiting signature", TODO });
+        if (d.scanned) chips.add(d.ocr ? new Object[] { "Text recognized (OCR)", DONE } : new Object[] { "Scan without text", INFO });
+        if (d.has("form")) chips.add(d.filled ? new Object[] { "Form filled in", DONE } : new Object[] { "Empty form", TODO });
+        if (d.hasSensitive()) chips.add(d.redacted ? new Object[] { "Personal data redacted", DONE } : new Object[] { "Contains personal data", TODO });
+        if (d.annotated) chips.add(new Object[] { "1 comment", INFO });
         g2.setFont(Theme.bold(12f));
         FontMetrics fm = g2.getFontMetrics();
         for (Object[] c : chips) {
@@ -125,7 +125,7 @@ public class Page extends JComponent {
         g2.fill(new Rectangle2D.Double(px, py, 18, PH));
         g2.fill(new Rectangle2D.Double(px + PW - 10, py, 10, PH));
         g2.setFont(Theme.bold(11f));
-        String t = "SKENIRANO · TEKST SE NE MOŽE PRETRAŽIVATI";
+        String t = "SCANNED · TEXT IS NOT SEARCHABLE";
         FontMetrics fm = g2.getFontMetrics();
         int tw = fm.stringWidth(t) + 24;
         g2.setColor(new Color(27, 33, 48, 210));
@@ -142,11 +142,11 @@ public class Page extends JComponent {
         g2.setColor(Theme.TEXT);
         g2.drawString(app.profile.name, x + 12, y + 26);
         g2.setFont(Theme.font(12f));
-        g2.drawString("Proveriti pre slanja.", x + 12, y + 48);
-        g2.drawString("Pitati za izmene u čl. 9.", x + 12, y + 66);
+        g2.drawString("Check before sending.", x + 12, y + 48);
+        g2.drawString("Ask about changes in Art. 9.", x + 12, y + 66);
     }
 
-    // ---------------- crtanje blokova ----------------
+    // ---------------- drawing blocks ----------------
 
     private final class Renderer {
         final Graphics2D g;
@@ -184,7 +184,7 @@ public class Page extends JComponent {
             }
             if (d.scanned && d.ocr) {
                 g.setFont(Theme.bold(10.5f));
-                String t = "OCR · tekst prepoznat";
+                String t = "OCR · text recognized";
                 FontMetrics fm = g.getFontMetrics();
                 int tw = fm.stringWidth(t) + 20;
                 g.setColor(Theme.hex("#E6F4EA"));
@@ -297,7 +297,7 @@ public class Page extends JComponent {
             for (int r = 0; r < rows.size(); r++) {
                 @SuppressWarnings("unchecked")
                 List<Object> row = (List<Object>) rows.get(r);
-                boolean last = r == rows.size() - 1 && String.valueOf(row.get(0)).startsWith("Ukupn");
+                boolean last = r == rows.size() - 1 && String.valueOf(row.get(0)).startsWith("Total");
                 x = M + 12;
                 for (int k = 0; k < cols && k < row.size(); k++) {
                     String cell = String.valueOf(row.get(k));
@@ -365,7 +365,7 @@ public class Page extends JComponent {
             }
             if (d.signed) {
                 g.setFont(Theme.bold(10.5f));
-                String t = "Potpisano elektronski · " + app.profile.name;
+                String t = "Signed electronically · " + app.profile.name;
                 FontMetrics fm = g.getFontMetrics();
                 int tw = fm.stringWidth(t) + 22;
                 g.setColor(Theme.hex("#E6F4EA"));

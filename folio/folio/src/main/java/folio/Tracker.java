@@ -9,8 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Opciono slanje događaja u PostHog. Uključuje se postavljanjem POSTHOG_KEY (project token).
- * POSTHOG_HOST je podrazumevano https://eu.i.posthog.com. Bez ključa se događaji samo ispisuju u konzolu.
+ * Optional event sending to PostHog. Turned on by setting POSTHOG_KEY (project token).
+ * POSTHOG_HOST defaults to https://eu.i.posthog.com. Without a key, events are only printed to the console.
  */
 public final class Tracker {
     private Tracker() {}
@@ -19,13 +19,13 @@ public final class Tracker {
     private static final String HOST = System.getenv().getOrDefault("POSTHOG_HOST", "https://eu.i.posthog.com");
     private static final HttpClient HTTP = HttpClient.newHttpClient();
 
-    /** Ime osobe zadato sa --user (npr. "ana_zirij"); null znači podrazumevanu osobu profila. */
+    /** Person name given with --user (e.g. "ana_zirij"); null means the profile's default person. */
     private static String user;
     private static String userName;
 
     public static boolean enabled() { return KEY != null && !KEY.isBlank(); }
 
-    /** Svi sledeći događaji idu na novu osobu folio_<ime>, nezavisno od profila. */
+    /** All following events go to a new person folio_<name>, regardless of the profile. */
     public static void setUser(String name) {
         if (name == null || name.isBlank()) return;
         userName = name.trim();
@@ -60,7 +60,7 @@ public final class Tracker {
     private static void send(String event, Model.Profile p, Map<String, Object> props) {
         String distinctId = distinctId(p);
         if (!enabled()) {
-            System.out.println("[događaj] " + event + " · " + distinctId + " · " + props);
+            System.out.println("[event] " + event + " · " + distinctId + " · " + props);
             return;
         }
         Map<String, Object> body = new LinkedHashMap<>();

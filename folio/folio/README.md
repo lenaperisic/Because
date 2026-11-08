@@ -1,67 +1,67 @@
-# Folio · PDF alat (demo)
+# Folio · PDF tool (demo)
 
-Mock PDF alata u Javi (Swing, bez spoljnih biblioteka) sa tri profila koji isti alat koriste potpuno različito. Razlika nije samo u dokumentima, nego u **funkcijama koje kliknu**, pa je odličan izvor podataka za grupisanje korisnika po ponašanju.
+A mock PDF tool in Java (Swing, no external libraries) with three profiles that use the same tool in completely different ways. The difference is not just in the documents but in **which features they click**, which makes it a great data source for grouping users by behavior.
 
-| Profil | Dokumenti | Šta koristi | Šta nikad |
+| Profile | Documents | Uses | Never uses |
 | --- | --- | --- | --- |
-| Developer · Marko Petrović | Specifikacije, RFC, fakture, release notes | Pretraga, izvoz u tekst, komentari | Formular, OCR, zacrnjivanje |
-| Lekar · Dr Ana Jovanović | Nalazi, uputi, skenovi starih nalaza, otpusne liste | Potpis, formulari, OCR, zacrnjivanje | Poređenje, izvoz, AI sažetak |
-| Bankar · Jelena Marković | Ugovori o kreditu, KYC, bilansi, skenovi ličnih karata | Zacrnjivanje, potpis, poređenje verzija | Koristi sve alate |
+| Developer · Marko Petrović | Specs, RFCs, invoices, release notes | Search, export text, comments | Fill form, OCR, redaction |
+| Doctor · Dr Ana Jovanović | Lab reports, referrals, scans of old reports, discharge summaries | Sign, fill form, OCR, redaction | Compare, export, AI summary |
+| Banker · Jelena Marković | Loan agreements, KYC, balance sheets, ID card scans | Redaction, sign, version compare | Uses every tool |
 
-Desni panel **„Kako koristi PDF alat"** pokazuje broj korišćenja svakog alata za poslednjih 30 dana i alate koje profil **nikad nije koristio**. Odatle dolaze pitanja za intervju, na primer: *„Svaki dan potpisujete i popunjavate formulare, ali AI sažetak nalaza nikad niste otvorili. Zašto?"*
+The right panel **"How they use the PDF tool"** shows how many times each tool was used in the last 30 days and which tools the profile has **never used**. That is where interview questions come from, for example: *"You sign and fill in forms every day, but you have never opened the AI summary of a report. Why?"*
 
-## Pokretanje
+## Running
 
-Potrebna je Java 17 ili novija.
+Requires Java 17 or newer.
 
 ```
 java -jar folio.jar
-java -jar folio.jar --profile lekar
-java -jar folio.jar --profile bankar
+java -jar folio.jar --profile doctor
+java -jar folio.jar --profile banker
 ```
 
-Profil se menja i dugmićima gore desno.
+The old profile names (`--profile lekar`, `--profile bankar`) still work. You can also switch profiles with the buttons in the top right.
 
-## Šta radi svaki alat
+## What each tool does
 
-| Alat | Efekat u demou |
+| Tool | Effect in the demo |
 | --- | --- |
-| Potpis | Dodaje potpis na dokument koji ima polje za potpis |
-| Formular | Popunjava prazan formular (uput, KYC) |
-| OCR | Pretvara sken u dokument sa tekstom |
-| Zacrni | Zacrnjuje lične podatke (ime, JMBG, broj dokumenta) |
-| Uporedi | Prikazuje izmene u odnosu na prethodnu verziju ugovora ili specifikacije |
-| AI sažetak | Prikazuje sažetak dokumenta |
-| Komentar | Dodaje komentar na stranu |
-| Pretraga, Spoji, Kompresuj, Izvezi tekst | Kratko obaveštenje |
+| Sign | Adds a signature to a document that has a signature field |
+| Fill form | Fills in an empty form (referral, KYC) |
+| OCR | Turns a scan into a document with text |
+| Redact | Redacts personal data (name, personal ID number, document number) |
+| Compare | Shows the changes against the previous version of a contract or spec |
+| AI summary | Shows a summary of the document |
+| Comment | Adds a comment to the page |
+| Search, Merge, Compress, Export text | Short notification |
 
-Narandžasta tačka na alatu znači da ga trenutni dokument čeka (nepotpisan, prazan formular, sken bez teksta, nezacrnjeni podaci). Svaki klik povećava brojač u desnom panelu.
+A yellow dot on a tool means the current document is waiting for it (unsigned, empty form, scan without text, personal data not redacted). Every click increases the counter in the right panel.
 
-## Podaci (JSON)
+## Data (JSON)
 
-Pri prvom pokretanju aplikacija napravi folder `folio-data/` sa fajlovima `developer.json`, `lekar.json` i `bankar.json`. Tu su:
+On first run the app creates a `folio-data/` folder with `developer.json`, `doctor.json` and `banker.json`. They contain:
 
-- `usage`: koliko puta je koja funkcija korišćena (brojevi u desnom panelu),
-- `documents`: dokumenti sa stanjem (`signed`, `filled`, `redacted`, `ocr`...), AI sažetkom, izmenama za poređenje i sadržajem prve strane (`blocks`: naslov, tabela, formular, potpis...).
+- `usage`: how many times each feature was used (the numbers in the right panel),
+- `documents`: documents with their state (`signed`, `filled`, `redacted`, `ocr`...), AI summary, changes for comparison and the content of the first page (`blocks`: title, table, form, signature...).
 
-Sve izmene se odmah čuvaju. Obrišite `folio-data/` da vratite početno stanje pre demoa.
+All changes are saved immediately. Delete `folio-data/` to reset to the initial state before a demo.
 
-## PostHog (opciono)
+## PostHog (optional)
 
-Događaji: `app_opened`, `profile_switched`, `document_opened`, `feature_used` (sa osobinama `feature` i `doc_kind`). Svaki profil je posebna osoba (`folio_developer`, `folio_lekar`, `folio_bankar`) sa osobinom `role`.
+Events: `app_opened`, `profile_switched`, `document_opened`, `feature_used` (with the properties `feature` and `doc_kind`). Each profile is a separate person (`folio_developer`, `folio_doctor`, `folio_banker`) with a `role` property.
 
-Bez podešavanja događaji se samo ispisuju u konzolu. Da idu u PostHog:
+Without configuration, events are only printed to the console. To send them to PostHog:
 
 ```
-export POSTHOG_KEY=phc_vas_project_token
-export POSTHOG_HOST=https://eu.i.posthog.com   # ili https://us.i.posthog.com
+export POSTHOG_KEY=phc_your_project_token
+export POSTHOG_HOST=https://eu.i.posthog.com   # or https://us.i.posthog.com
 java -jar folio.jar
 ```
 
-Na Windowsu: `set POSTHOG_KEY=...` pre pokretanja.
+On Windows: `set POSTHOG_KEY=...` before running.
 
-Za novu osobu uživo (demo): `java -jar folio.jar --profile lekar --user "Ana Zirij"`. Događaji tada idu na osobu `folio_ana_zirij` (ime bez kvačica, mala slova, `_` umesto razmaka), sa ulogom izabranog profila.
+For a new live person (demo): `java -jar folio.jar --profile doctor --user "Ana Zirij"`. Events then go to the person `folio_ana_zirij` (name without diacritics, lowercase, `_` instead of spaces), with the role of the selected profile.
 
-## Izgradnja iz izvornog koda
+## Building from source
 
-`./build.sh` (macOS, Linux) ili `build.bat` (Windows) pravi novi `folio.jar`.
+`./build.sh` (macOS, Linux) or `build.bat` (Windows) builds a new `folio.jar`.

@@ -7,7 +7,7 @@ import java.awt.Rectangle;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.JComponent;
 
-/** Tanak, zaobljen skrolbar. */
+/** Thin, rounded scrollbar. */
 public class ThinScrollBarUI extends javax.swing.plaf.basic.BasicScrollBarUI {
     @Override protected void configureScrollBarColors() {
         thumbColor = Theme.GRID;

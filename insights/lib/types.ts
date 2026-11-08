@@ -1,4 +1,4 @@
-// Ugovor između delova (A ↔ B ↔ C). Ne menjati bez dogovora.
+// Contract between the parts (A ↔ B ↔ C). Do not change without agreement.
 
 export type Fact = { id: string; text: string };
 export type Profile = { userId: string; role: string; segmentId: string; facts: Fact[] };
@@ -7,13 +7,13 @@ export type InterviewResult = { userId: string; summary: string; mainReason: str
   reasons: string[]; quotes: string[]; sentiment: "neg" | "neu" | "pos";
   suggestedChange: string; factsUsed: string[]; simulated: boolean };
 
-// ---- Pomoćni oblici (interni za A; nisu deo ugovora) ----
+// ---- Helper shapes (internal to A; not part of the contract) ----
 
-/** Jedan red iz HogQL upita „upotreba svakog alata po osobi“. */
+/** One row from the HogQL query "use of each tool per person". */
 export type UsageRow = { distinct_id: string; feature: string; n: number; first_used: string; last_used: string };
-/** Jedan red iz upita „uloga i aktivnost po osobi“. */
+/** One row from the query "role and activity per person". */
 export type PersonRow = { distinct_id: string; role: string; name: string; opened: number; first_seen: string; last_seen: string };
-/** Današnja aktivnost: događaj (+ alat) po vrsti dokumenta. */
+/** Today's activity: event (+ tool) per document type. */
 export type TodayRow = { distinct_id: string; event: string; feature: string; doc_kind: string; n: number };
 
 export type EventCache = {
@@ -26,15 +26,15 @@ export type EventCache = {
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
-/** Sačuvan intervju: rezultat iz ugovora + transkript. */
+/** Saved interview: the contract result + transcript. */
 export type InterviewRecord = {
   result: InterviewResult;
   transcript: ChatMessage[];
   completedAt: string;
   segmentId?: string;
-  /** Kad je rezultat upisan u PostHog (ai_interview_completed + $set). */
+  /** When the result was written to PostHog (ai_interview_completed + $set). */
   posthogSentAt?: string;
   posthogError?: string;
-  /** Samo za simulirane: razlog koji je „korisnik“ imao, za proveru tačnosti intervjua. */
+  /** Simulated only: the reason the "user" had, to check how accurate the interview was. */
   hiddenReason?: string;
 };

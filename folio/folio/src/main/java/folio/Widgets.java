@@ -16,14 +16,14 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-/** Ručno crtane kontrole: dugmad, polja i avatari. */
+/** Hand-drawn controls: buttons, fields and avatars. */
 public final class Widgets {
     private Widgets() {}
 
-    /** CHROME: dugme na crnoj gornjoj traci; izabrano je žuto (marker). */
+    /** CHROME: a button on the black top bar; the selected one is yellow (marker). */
     public enum Kind { PRIMARY, OUTLINE, SOFT, GHOST, CHROME }
 
-    /** Zaobljeno dugme sa tekstom. */
+    /** Rounded button with text. */
     public static class Pill extends JButton {
         private Kind kind;
         private Color color = Theme.ACCENT;
@@ -114,7 +114,7 @@ public final class Widgets {
     public enum Icon { LEFT, RIGHT, CLOSE, PLUS, CLOCK, PIN, PEOPLE, VIDEO, TEXT, TRASH, CALENDAR,
         EYE, SEARCH, COMMENT, SIGN, FORM, SCAN, REDACT, COMPARE, MERGE, COMPRESS, EXPORT, SPARK, FILE, UPLOAD }
 
-    /** Okruglo dugme sa ikonicom. */
+    /** Round button with an icon. */
     public static class IconButton extends JButton {
         private final Icon icon;
 
@@ -143,7 +143,7 @@ public final class Widgets {
         }
     }
 
-    /** Crta ikonicu centriranu u (cx, cy) veličine size. */
+    /** Draws an icon centered at (cx, cy) with the given size. */
     public static void paintIcon(Graphics2D g2, Icon icon, double cx, double cy, double size) {
         double h = size / 2.0;
         Theme.stroke(g2, 1.8f);
@@ -269,7 +269,7 @@ public final class Widgets {
                 p.lineTo(cx + h * 0.85, cy + h * 0.85); p.lineTo(cx + h * 0.85, cy + h * 0.1);
                 g2.draw(p); break;
             case SPARK:
-                // AI sažetak: tekst koji se skraćuje (bez „magic“ zvezdica).
+                // AI summary: text being shortened (no "magic" sparkles).
                 p.moveTo(cx - h * 0.85, cy - h * 0.6); p.lineTo(cx + h * 0.85, cy - h * 0.6);
                 p.moveTo(cx - h * 0.85, cy - h * 0.05); p.lineTo(cx + h * 0.35, cy - h * 0.05);
                 p.moveTo(cx - h * 0.85, cy + h * 0.5); p.lineTo(cx - h * 0.15, cy + h * 0.5);
@@ -295,7 +295,7 @@ public final class Widgets {
         }
     }
 
-    /** Krug sa inicijalima. */
+    /** Circle with initials. */
     public static void avatar(Graphics2D g2, String initials, Color color, double x, double y, double d) {
         g2.setColor(color);
         g2.fill(new Ellipse2D.Double(x, y, d, d));
@@ -314,7 +314,7 @@ public final class Widgets {
         return b.length() == 0 ? "?" : b.toString().toUpperCase();
     }
 
-    /** Zaobljeno tekstualno polje sa placeholderom. */
+    /** Rounded text field with a placeholder. */
     public static class Field extends JTextField {
         private final String placeholder;
 

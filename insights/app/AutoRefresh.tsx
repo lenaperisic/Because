@@ -3,13 +3,13 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 /**
- * Ponovo iscrta stranu sa servera na svakih `seconds` sekundi, da se novi rezultati intervjua pojave sami.
- * Čita samo lokalne fajlove (keš i rezultate); upit u PostHog i dalje ide samo na dugme „Osveži iz PostHoga“.
+ * Re-renders the page from the server every `seconds` seconds, so new interview results show up on their own.
+ * Reads only local files (cache and results); the PostHog query still runs only on the "Refresh from PostHog" button.
  */
 export default function AutoRefresh({ seconds = 5 }: { seconds?: number }) {
   const router = useRouter();
   useEffect(() => {
-    // Posle Back/Forward strana dolazi iz keša rutera, pa odmah povuci svežu.
+    // After Back/Forward the page comes from the router cache, so fetch a fresh one right away.
     router.refresh();
     const timer = setInterval(() => {
       if (!document.hidden) router.refresh();

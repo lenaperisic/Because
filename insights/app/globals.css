@@ -1,7 +1,7 @@
 /*
-  Folio · AI intervjui. Pravac: terenska beležnica istraživača.
-  Duboko teget-tirkizno mastilo na čistoj beloj, a crveni marker za glas ljudi (navodnici, osoba uživo).
-  Jedan fokus po ekranu: na ekranu grupe to je sinteza, ispisana krupno u bloku boje mastila.
+  Folio · AI interviews. Direction: a researcher's field notebook.
+  Deep navy-teal ink on clean white, with a red marker for people's voices (quotation marks, the live person).
+  One focus per screen: on the group screen it is the synthesis, set large in a block of ink color.
 */
 :root {
   --bg: oklch(1 0 0);
@@ -26,7 +26,7 @@ html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--font-sans); font-feature-settings: "kern"; }
 main { max-width: 1180px; margin: 0 auto; padding: clamp(22px, 3vw, 44px) clamp(16px, 3vw, 40px) 80px; }
 
-/* Brend: Because. Znak ∵ („zato što“) bojom glasa, reč mastilom. */
+/* Brand: Because. The mark ∵ ("because") in the voice color, the word in ink. */
 .brandbar { max-width: 1180px; margin: 0 auto; padding: 20px clamp(16px, 3vw, 40px) 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
 .brand:hover .wordmark { color: var(--primary); }
@@ -58,7 +58,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 .split { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr) 360px; margin-top: 28px; align-items: start; }
 @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
 
-/* Oznake: uživo je glas (crveni marker), simulirano se povlači (isprekidano), ostalo je mirno mastilo. */
+/* Labels: live is the voice (red marker), simulated steps back (dashed), the rest is calm ink. */
 .pill { display: inline-block; font-size: 0.8125rem; font-weight: 650; line-height: 1.2; letter-spacing: 0; padding: 3px 10px; border-radius: 999px; background: var(--primary-wash); color: var(--primary); vertical-align: 0.15em; white-space: nowrap; }
 .pill.live { background: var(--voice-strong); color: oklch(1 0 0); }
 .pill.live::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: 0.08em; animation: live-pulse 1.8s var(--ease-out) infinite; }
@@ -67,12 +67,12 @@ button:disabled { opacity: 0.45; cursor: default; }
 
 .error { color: var(--danger); font-size: 0.9375rem; font-weight: 550; }
 
-/* Početna: grupe */
+/* Home: groups */
 ul.users { list-style: none; padding: 0; margin: 14px 0 0; max-height: 280px; overflow: auto; font-size: 0.9375rem; border-top: 1px solid var(--line); }
 ul.users li { padding: 8px 0; display: flex; flex-direction: column; gap: 1px; border-bottom: 1px solid var(--line); }
 ul.users li a { text-decoration: none; font-weight: 550; }
 
-/* Intervju */
+/* Interview */
 .facts { list-style: none; padding: 0; margin: 0; font-size: 0.9375rem; }
 .facts li { padding: 8px 0; border-bottom: 1px solid var(--line); }
 .facts code { color: var(--ink-soft); margin-right: 8px; font-size: 0.8125rem; }
@@ -86,7 +86,7 @@ ul.users li a { text-decoration: none; font-weight: 550; }
 dl.result dt { font-weight: 700; margin-top: 12px; }
 dl.result dd { margin: 2px 0 0; }
 
-/* Ekran grupe (app/segment/[id]) */
+/* Group screen (app/segment/[id]) */
 .table-card { min-width: 0; }
 .table-wrap { overflow-x: auto; }
 table.people { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
@@ -98,11 +98,11 @@ ul.reasons { list-style: none; padding: 0; margin: 0; }
 ul.reasons > li { padding: 14px 0; border-bottom: 1px solid var(--line); }
 ul.reasons > li:last-child { border-bottom: 0; padding-bottom: 0; }
 
-/* Citat: glas korisnika, sa okačenim crvenim navodnikom umesto bočne linije. */
+/* Quote: the user's voice, with a hanging red quotation mark instead of a side rule. */
 .quote { position: relative; margin: 10px 0 0; padding-left: 0.9em; font-size: 1rem; line-height: 1.5; text-wrap: pretty; }
 .qm { position: absolute; left: -0.05em; top: -0.12em; font-size: 1.6em; line-height: 1; font-weight: 800; color: var(--voice); }
 
-/* Sinteza (Claude): jedini dramatični trenutak, blok u boji mastila. */
+/* Synthesis (Claude): the one dramatic moment, a block in ink color. */
 .synthesis { margin-top: 32px; background: var(--deep); color: var(--on-deep); border-color: transparent; border-radius: 26px; padding: clamp(22px, 3.4vw, 48px); }
 .synthesis h2 { color: var(--on-deep-soft); font-size: 1rem; font-weight: 650; letter-spacing: 0; margin: 0; }
 .synthesis .muted { color: var(--on-deep-soft); }

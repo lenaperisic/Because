@@ -18,7 +18,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-/** Leva kolona: profil, dugme za otvaranje i lista dokumenata. */
+/** Left column: profile, open button and document list. */
 public class Sidebar extends JPanel {
     public static final int SIDE_W = 300;
     private final App app;
@@ -36,10 +36,10 @@ public class Sidebar extends JPanel {
 
         add(left(card));
         add(Box.createVerticalStrut(14));
-        open = new Widgets.Pill("Otvori PDF", Widgets.Kind.PRIMARY).color(Theme.TEXT).icon(Widgets.Icon.UPLOAD);
+        open = new Widgets.Pill("Open PDF", Widgets.Kind.PRIMARY).color(Theme.TEXT).icon(Widgets.Icon.UPLOAD);
         open.setFont(Theme.bold(14f));
         open.setBorder(new EmptyBorder(14, 24, 14, 26));
-        open.addActionListener(e -> app.toast("Demo: dokumenti su već učitani iz JSON-a"));
+        open.addActionListener(e -> app.toast("Demo: documents are already loaded from JSON"));
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         row.setOpaque(false);
         row.add(open);
@@ -86,7 +86,7 @@ public class Sidebar extends JPanel {
         }
     }
 
-    /** Lista dokumenata sa ikonicom fajla, nazivom i statusom. */
+    /** Document list with a file icon, name and status. */
     private class DocList extends JComponent {
         static final int ROW = 66, HEAD = 30;
 
@@ -111,12 +111,12 @@ public class Sidebar extends JPanel {
             int w = getWidth();
             g2.setFont(Theme.bold(13.5f));
             g2.setColor(Theme.TEXT);
-            g2.drawString("Nedavni dokumenti", 4, 18);
+            g2.drawString("Recent documents", 4, 18);
             int y = HEAD;
             for (Model.Doc d : app.profile.docs) {
                 boolean sel = d == app.doc;
                 if (sel) {
-                    // Otvoren dokument: bela kartica sa tankim crnim obodom, bez senke i bočne trake.
+                    // Open document: white card with a thin black outline, no shadow or side bar.
                     RoundRectangle2D row = new RoundRectangle2D.Double(0.5, y + 2.5, w - 1, ROW - 7, 10, 10);
                     g2.setColor(Theme.BG);
                     g2.fill(row);
@@ -132,8 +132,8 @@ public class Sidebar extends JPanel {
                 g2.setFont(Theme.font(11.5f));
                 g2.setColor(Theme.MUTED);
                 fm = g2.getFontMetrics();
-                String meta = d.pages + (d.pages == 1 ? " strana" : " str.") + " · " + d.size + " · " + d.updated;
-                String badge = d.needsSignature() ? "Za potpis" : d.needsOcr() ? "Sken" : (d.has("form") && !d.filled) ? "Popuniti" : null;
+                String meta = d.pages + (d.pages == 1 ? " p." : " pp.") + " · " + d.size + " · " + d.updated;
+                String badge = d.needsSignature() ? "To sign" : d.needsOcr() ? "Scan" : (d.has("form") && !d.filled) ? "To fill" : null;
                 int badgeW = 0;
                 if (badge != null) {
                     g2.setFont(Theme.bold(10f));
@@ -141,13 +141,13 @@ public class Sidebar extends JPanel {
                     badgeW = bf.stringWidth(badge) + 14;
                     RoundRectangle2D b = new RoundRectangle2D.Double(w - badgeW - 4, y + 34, badgeW, 18, 5, 5);
                     if (d.needsOcr()) {
-                        // Sken: obaveštenje, ne posao, pa samo obod.
+                        // Scan: a notice, not a task, so outline only.
                         g2.setColor(Theme.MUTED);
                         Theme.stroke(g2, 1f);
                         g2.draw(b);
                         g2.setColor(Theme.MUTED);
                     } else {
-                        // Čeka korisnika: marker.
+                        // Waiting on the user: marker.
                         g2.setColor(Theme.MARKER);
                         g2.fill(b);
                         g2.setColor(Theme.TEXT);
@@ -173,7 +173,7 @@ public class Sidebar extends JPanel {
             p.lineTo(x + 4, y + 36);
             p.quadTo(x, y + 36, x, y + 32);
             p.closePath();
-            // List papira: belo sa crnim obodom, savijen ugao; vrsta dokumenta ide u tekst, ne u boju.
+            // Sheet of paper: white with a black outline and a folded corner; the document type goes in text, not color.
             g2.setColor(Theme.BG);
             g2.fill(p);
             g2.setColor(Theme.TEXT);
@@ -189,7 +189,7 @@ public class Sidebar extends JPanel {
         }
     }
 
-    /** Kratki brojevi: šta čeka na ovog korisnika. */
+    /** Quick counts: what is waiting on this user. */
     private class Queue extends JComponent {
         Queue() {
             setPreferredSize(new Dimension(SIDE_W - 36, 120));
@@ -206,9 +206,9 @@ public class Sidebar extends JPanel {
             }
             g2.setFont(Theme.bold(13.5f));
             g2.setColor(Theme.TEXT);
-            g2.drawString("Čeka na mene", 4, 18);
-            String[][] rows = { { "Za potpis", String.valueOf(sign) }, { "Za popunjavanje", String.valueOf(forms) },
-                    { "Skenovi bez teksta", String.valueOf(scan) } };
+            g2.drawString("Waiting on me", 4, 18);
+            String[][] rows = { { "To sign", String.valueOf(sign) }, { "To fill in", String.valueOf(forms) },
+                    { "Scans without text", String.valueOf(scan) } };
             int y = 44;
             for (String[] r : rows) {
                 g2.setFont(Theme.font(13f));

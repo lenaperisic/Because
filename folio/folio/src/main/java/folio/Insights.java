@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComponent;
 
-/** Desni panel: koje funkcije ovaj profil koristi, a koje nikad. */
+/** Right panel: which features this profile uses, and which it never touches. */
 public class Insights extends JComponent {
     public static final int PANEL_W = 320;
     private final App app;
@@ -33,14 +33,14 @@ public class Insights extends JComponent {
 
         g2.setFont(Theme.bold(17f));
         g2.setColor(Theme.TEXT);
-        g2.drawString("Kako koristi PDF alat", x, y);
+        g2.drawString("How they use the PDF tool", x, y);
         y += 20;
         g2.setFont(Theme.font(12f));
         g2.setColor(Theme.MUTED);
-        g2.drawString("Poslednjih 30 dana · " + p.role, x, y);
+        g2.drawString("Last 30 days · " + p.role, x, y);
         y += 16;
 
-        // najkorišćenija funkcija (bez čitanja)
+        // most used feature (not counting reading)
         Model.Feature top = null;
         int total = 0;
         for (Model.Feature f : Model.FEATURES) {
@@ -48,16 +48,16 @@ public class Insights extends JComponent {
             if (f.id.equals("read")) continue;
             if (top == null || p.count(f.id) > p.count(top.id)) top = f;
         }
-        // Sažetak kao rečenica, ne kao kartice sa velikim brojevima.
+        // Summary as a sentence, not as cards with big numbers.
         y += 16;
         g2.setFont(Theme.font(14f));
         g2.setColor(Theme.TEXT);
-        g2.drawString(p.count("read") + " otvaranja · " + (total - p.count("read")) + " upotreba alata", x, y);
+        g2.drawString(p.count("read") + " opens · " + (total - p.count("read")) + " tool uses", x, y);
         y += 26;
         if (top != null) {
             g2.setFont(Theme.font(14f));
             FontMetrics fm = g2.getFontMetrics();
-            String lead = "Najčešće: ";
+            String lead = "Most used: ";
             g2.drawString(lead, x, y);
             int lx = x + fm.stringWidth(lead);
             g2.setFont(Theme.bold(14f));
@@ -72,10 +72,10 @@ public class Insights extends JComponent {
         g2.fillRect(x, y, cw, 1);
         y += 28;
 
-        // trake po funkciji
+        // one bar per feature
         g2.setFont(Theme.bold(13.5f));
         g2.setColor(Theme.TEXT);
-        g2.drawString("Alati koje koristi", x, y);
+        g2.drawString("Tools they use", x, y);
         y += 18;
         List<Model.Feature> used = new ArrayList<>(), never = new ArrayList<>();
         int max = 1;
@@ -96,7 +96,7 @@ public class Insights extends JComponent {
             g2.setColor(Theme.TEXT);
             g2.drawString(f.name, x + 24, y + 12);
             double bw = Math.max(4, barMax * c / (double) max);
-            // Najkorišćeniji alat je markiran; ostali su sivo mastilo.
+            // The most used tool gets the marker; the rest are grey ink.
             g2.setColor(shown == 0 ? Theme.MARKER : Theme.hex("#BDBDBD"));
             g2.fill(new RoundRectangle2D.Double(x + labelW, y + 2, bw, 11, 3, 3));
             if (shown == 0) {
@@ -113,16 +113,16 @@ public class Insights extends JComponent {
             shown++;
         }
 
-        // nikad korišćeno
+        // never used
         y += 14;
         g2.setFont(Theme.bold(13.5f));
         g2.setColor(Theme.TEXT);
-        g2.drawString("Nikad nije koristio", x, y);
+        g2.drawString("Never used", x, y);
         y += 14;
         if (never.isEmpty()) {
             g2.setFont(Theme.font(12.5f));
             g2.setColor(Theme.MUTED);
-            g2.drawString("Koristi sve alate.", x, y + 14);
+            g2.drawString("Uses every tool.", x, y + 14);
         }
         int cx = x;
         g2.setFont(Theme.bold(12f));

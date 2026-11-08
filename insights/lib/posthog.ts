@@ -2,38 +2,52 @@ import fs from "node:fs";
 import path from "node:path";
 import type { EventCache, PersonRow, TodayRow, UsageRow } from "./types";
 
-// Čitanje: PostHog query API (personal key, Query Read).
-// Ograničenja: bez LIMIT vraća 100 redova (sa LIMIT do 50.000), 240 upita/min, 3 istovremeno,
-// upit do 10 s. Zato upite puštamo jedan po jedan i rezultat odmah keširamo u fajl.
+// Reading: PostHog query API (personal key, Query Read).
+// Limits: without LIMIT it returns 100 rows (with LIMIT up to 50,000), 240 queries/min, 3 at a time,
+// queries up to 10 s. So we run the queries one at a time and cache the result in a file right away.
 
 const DATA_DIR = path.join(process.cwd(), "data");
 export const CACHE_FILE = path.join(DATA_DIR, "cache.json");
-/** Seed skripta ovde upisuje isti oblik, kao rezervu ako PostHog zakaže. */
+/** The seed script writes the same shape here, as a backup in case PostHog fails. */
 export const SEED_BACKUP_FILE = path.join(DATA_DIR, "seed-backup.json");
 
-const Q_USAGE = `
+/**
+ * Events ingested before this moment are ignored. They belong to the earlier Serbian dataset, whose
+ * persons were deleted; PostHog removes their events asynchronously (hours to days), and until then
+ * they would still show up in queries. Filters on ingestion time (created_at), not on the event timestamp,
+ * because the seed back-dates its events over 30 days. Override with POSTHOG_IGNORE_BEFORE (ISO time).
+ */
+const IGNORE_BEFORE = "2026-11-08T12:30:00Z";
+/** Read lazily: scripts load .env.local after their imports run. */
+function fresh() {
+  const since = new Date(process.env.POSTHOG_IGNORE_BEFORE || IGNORE_BEFORE);
+  if (Number.isNaN(since.getTime())) throw new Error(`POSTHOG_IGNORE_BEFORE is not a valid time: ${process.env.POSTHOG_IGNORE_BEFORE}`);
+  return `created_at >= toDateTime('${since.toISOString().slice(0, 19).replace("T", " ")}', 'UTC')`;
+}
+
+const qUsage = () => `
 SELECT distinct_id, properties.feature AS feature, count() AS n,
        min(timestamp) AS first_used, max(timestamp) AS last_used
 FROM events
-WHERE event = 'feature_used' AND timestamp > now() - INTERVAL 30 DAY
+WHERE event = 'feature_used' AND timestamp > now() - INTERVAL 30 DAY AND ${fresh()}
 GROUP BY distinct_id, feature
 LIMIT 50000`;
 
-const Q_PEOPLE = `
+const qPeople = () => `
 SELECT distinct_id, any(properties.role) AS role, any(person.properties.name) AS name,
        countIf(event = 'document_opened') AS opened,
        min(timestamp) AS first_seen, max(timestamp) AS last_seen
 FROM events
-WHERE timestamp > now() - INTERVAL 30 DAY
+WHERE timestamp > now() - INTERVAL 30 DAY AND ${fresh()}
   AND event IN ('app_opened', 'profile_switched', 'document_opened', 'feature_used')
 GROUP BY distinct_id
 LIMIT 50000`;
 
-const Q_TODAY = `
+const qToday = () => `
 SELECT distinct_id, event, ifNull(properties.feature, '') AS feature,
        ifNull(properties.doc_kind, '') AS doc_kind, count() AS n
 FROM events
-WHERE timestamp >= toStartOfDay(now())
+WHERE timestamp >= toStartOfDay(now()) AND ${fresh()}
   AND event IN ('document_opened', 'feature_used')
 GROUP BY distinct_id, event, feature, doc_kind
 LIMIT 50000`;
@@ -57,12 +71,12 @@ async function hogql(query: string): Promise<{ columns: string[]; results: unkno
   return (await res.json()) as { columns: string[]; results: unknown[][] };
 }
 
-/** Pretvara [kolone] + [[red]] u objekte. */
+/** Turns [columns] + [[row]] into objects. */
 function rows<T>(r: { columns: string[]; results: unknown[][] }): T[] {
   return r.results.map((row) => Object.fromEntries(r.columns.map((c, i) => [c, row[i]])) as T);
 }
 
-/** PostHog vraća vreme kao ISO string; za svaki slučaj podrži i „YYYY-MM-DD HH:MM:SS“ (UTC). */
+/** PostHog returns times as ISO strings; just in case, also accept "YYYY-MM-DD HH:MM:SS" (UTC). */
 function iso(v: unknown): string {
   if (!v) return "";
   const s = String(v);
@@ -72,23 +86,23 @@ function iso(v: unknown): string {
   return Number.isNaN(d2.getTime()) ? "" : d2.toISOString();
 }
 
-/** Povuče sve iz PostHoga (3 upita, jedan po jedan) i upiše keš. */
+/** Pulls everything from PostHog (3 queries, one at a time) and writes the cache. */
 export async function refreshFromPosthog(): Promise<EventCache> {
-  if (!posthogReadConfigured()) throw new Error("Nedostaju POSTHOG_PERSONAL_KEY i POSTHOG_PROJECT_ID.");
-  const usage = rows<UsageRow>(await hogql(Q_USAGE)).map((r) => ({
+  if (!posthogReadConfigured()) throw new Error("POSTHOG_PERSONAL_KEY and POSTHOG_PROJECT_ID are missing.");
+  const usage = rows<UsageRow>(await hogql(qUsage())).map((r) => ({
     ...r, n: Number(r.n), first_used: iso(r.first_used), last_used: iso(r.last_used),
   }));
-  const people = rows<PersonRow>(await hogql(Q_PEOPLE)).map((r) => ({
+  const people = rows<PersonRow>(await hogql(qPeople())).map((r) => ({
     ...r, role: r.role ?? "", name: r.name ?? "", opened: Number(r.opened),
     first_seen: iso(r.first_seen), last_seen: iso(r.last_seen),
   }));
-  const today = rows<TodayRow>(await hogql(Q_TODAY)).map((r) => ({ ...r, n: Number(r.n) }));
+  const today = rows<TodayRow>(await hogql(qToday())).map((r) => ({ ...r, n: Number(r.n) }));
   const cache: EventCache = { fetchedAt: new Date().toISOString(), source: "posthog", usage, people, today };
   writeJson(CACHE_FILE, cache);
   return cache;
 }
 
-/** Keš iz PostHoga; ako ga nema, lokalna rezerva iz seed skripte; ako ni nje nema, prazno. */
+/** Cache from PostHog; if there is none, the local seed backup; if that is missing too, empty. */
 export function loadCache(): EventCache {
   for (const f of [CACHE_FILE, SEED_BACKUP_FILE]) {
     if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, "utf8")) as EventCache;

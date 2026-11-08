@@ -6,45 +6,45 @@ brand
 
 ## Users
 
-Dve publike, iste ekrane:
+Two audiences, same screens:
 
-- **Produkt tim koji već koristi PostHog** (PM, UX istraživač, osnivač). Ima podatke o tome šta korisnici rade, a nema zašto. Otvara alat da vidi u koje grupe po ponašanju se korisnici dele, šta su rekli u AI intervjuu i koji razlog se ponavlja, pa da odluči šta da promeni u proizvodu.
-- **Žiri na hakaton demou (danas).** Gleda sa projektora oko 3 minuta, uživo: član žirija u Folio-u potpiše nalaz, za par sekundi se pojavi u grupi, AI ga intervjuiše o onome što je stvarno uradio, rezultat se vidi u PostHog-u, a ekran grupe pokazuje sintezu razloga sa citatima. Svaki ekran mora da se razume za oko 10 sekundi, bez objašnjavanja.
+- **A product team that already uses PostHog** (PM, UX researcher, founder). They have data on what users do, but not why. They open the tool to see which behavior groups their users fall into, what people said in the AI interview and which reason keeps coming up, so they can decide what to change in the product.
+- **The jury at the hackathon demo (today).** They watch on a projector for about 3 minutes, live: a jury member signs a lab report in Folio, a few seconds later shows up in a group, the AI interviews them about what they actually did, the result appears in PostHog, and the group screen shows a synthesis of reasons with quotes. Every screen has to make sense in about 10 seconds, without explanation.
 
-Krajnji korisnici koje intervjuišemo (lekar, developer, bankar u Folio-u) vide samo ekran intervjua: razgovor sa AI-jem koji traje 2 do 3 minuta i počinje traženjem pristanka.
+The end users we interview (doctor, developer, banker in Folio) only see the interview screen: a 2 to 3 minute conversation with the AI that starts by asking for consent.
 
 ## Product Purpose
 
-Ime proizvoda: **Because** (znak ∵, matematički „zato što“). „PostHog vam kaže šta korisnici rade. Because ih pita zašto, i to svakog o onome što je on uradio.“
+Product name: **Because** (the ∵ sign, the math symbol for "because"). "PostHog tells you what users do. Because asks them why, each one about what they actually did."
 
-Alat se kači na PostHog, razvrstava korisnike u grupe po ponašanju (kod, ne model), vodi AI intervju zasnovan isključivo na činjenicama koje je izračunao kod, i rezultat vraća u PostHog kao osobine osobe (`ai_main_reason`), pa produkt tim pravi kohorte po razlogu bez koda. Uspeh: produkt tim posle jednog pogleda na grupu zna glavni razlog, ima citat koji ga dokazuje i konkretan predlog promene; žiri pamti „pitali su me o onome što sam upravo uradio“.
+The tool connects to PostHog, sorts users into behavior groups (code, not a model), runs an AI interview based only on facts computed by code, and sends the result back to PostHog as person properties (`ai_main_reason`), so the product team can build cohorts by reason without code. Success: after one look at a group, the product team knows the main reason, has a quote that proves it and a concrete suggested change; the jury remembers "they asked me about what I had just done."
 
 ## Brand Personality
 
-**Ljudsko, radoznalo, toplo.** U centru su glasovi ljudi: citati su glavni materijal, ne ukras. Ton je ton dobrog istraživača: radoznao, pažljiv, nikad sugestivan, persira. Uvid se kaže jednom jasnom rečenicom, pa ga prate dokazi.
+**Human, curious, warm.** People's voices are at the center: quotes are the main material, not decoration. The tone is that of a good researcher: curious, careful, never leading, polite. An insight is stated once in one clear sentence, then backed by evidence.
 
-Reference:
-- **The Pudding / NYT data priče:** naslov je sam uvid, citati nose glas ljudi, tipografija nosi stranu, podaci služe priči.
-- **Linear:** mirno i precizno; jasna hijerarhija, malo boja, svaki element deluje promišljeno.
+References:
+- **The Pudding / NYT data stories:** the headline is the insight itself, quotes carry people's voices, typography carries the page, data serves the story.
+- **Linear:** calm and precise; clear hierarchy, few colors, every element feels considered.
 
 ## Anti-references
 
-- **Generički SaaS dashboard:** sive kartice u mreži, plavi dugmići, velike metrike sa malim labelama, sve iste težine.
-- **AI ljubičasto i „sparkle“:** ljubičasti gradijenti, zvezdice i „magic“ ikonice za sve što radi AI.
-- **Klon PostHog-a:** gust analitički UI pun grafikona i filtera. Mi smo „zašto“, ne još jedan „šta“.
-- **Krem/bež „editorial“:** topla papir-pozadina sa serifom koja danas izgleda kao svaki AI sajt.
+- **Generic SaaS dashboard:** grey cards in a grid, blue buttons, big metrics with small labels, everything the same weight.
+- **AI purple and "sparkle":** purple gradients, stars and "magic" icons for everything the AI does.
+- **A PostHog clone:** dense analytics UI full of charts and filters. We are the "why", not another "what".
+- **Cream/beige "editorial":** a warm paper background with a serif that today looks like every AI website.
 
 ## Design Principles
 
-1. **Glas korisnika u prvom planu.** Odgovor na „zašto“ se pokazuje rečima korisnika; citat je dokaz i glavni sadržaj, broj osoba ga prati.
-2. **Uvid kao naslov.** Svaki ekran počinje rečenicom koja kaže šta je otkriveno (zaključak sinteze, glavni razlog), a detalji i tabele dolaze ispod.
-3. **Dokaz pre tvrdnje.** Činjenice računa kod, broj osoba računa kod, citati su doslovni, a AI navodi koje je činjenice koristio. Interfejs to pokazuje, ne samo tvrdi.
-4. **Iskreno o simulaciji.** Simulirani rezultati su uvek jasno označeni, a pravi intervju uživo se izdvaja; žiri nikad ne sme da pomisli da je sve lažno.
-5. **Mirna pozadina, jedan glas.** Kao Linear: malo boja i ukrasa, pa ono što je važno (uvid, citat, osoba uživo) jasno iskače.
+1. **The user's voice comes first.** The answer to "why" is shown in the user's words; the quote is the evidence and the main content, the people count follows it.
+2. **The insight is the headline.** Every screen starts with a sentence that says what was found (the synthesis takeaway, the main reason), and details and tables come below.
+3. **Evidence before claims.** Code computes the facts, code counts the people, quotes are verbatim, and the AI cites which facts it used. The interface shows this, not just claims it.
+4. **Honest about simulation.** Simulated results are always clearly labeled, and a real live interview stands out; the jury must never think everything is fake.
+5. **Calm background, one voice.** Like Linear: few colors and little decoration, so what matters (the insight, the quote, the live person) clearly stands out.
 
 ## Accessibility & Inclusion
 
-- WCAG 2.2 AA: kontrast teksta bar 4.5:1 (veliki tekst 3:1), bez svetlosivog teksta na svetloj pozadini.
-- Čitljivo sa projektora u osvetljenoj sali: telo teksta bar 16px, ključni brojevi i uvidi krupni, stanje (uživo, simulirano, upisano u PostHog) nikad samo bojom.
-- `prefers-reduced-motion` se poštuje: animacije imaju trenutnu ili crossfade alternativu.
-- Interfejs je na srpskom (latinica, ekavica); intervju persira.
+- WCAG 2.2 AA: text contrast at least 4.5:1 (large text 3:1), no light grey text on a light background.
+- Readable from a projector in a lit room: body text at least 16px, key numbers and insights large, state (live, simulated, written to PostHog) never shown by color alone.
+- `prefers-reduced-motion` is respected: animations have an instant or crossfade alternative.
+- The interface is in English; the interview is polite and warm.

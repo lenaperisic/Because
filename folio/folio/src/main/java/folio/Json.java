@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Mali JSON parser i pisac bez spoljnih biblioteka. Objekti su LinkedHashMap, nizovi ArrayList. */
+/** Tiny JSON parser and writer with no external libraries. Objects are LinkedHashMap, arrays are ArrayList. */
 public final class Json {
     private final String s;
     private int i;
@@ -17,12 +17,12 @@ public final class Json {
         p.ws();
         Object v = p.value();
         p.ws();
-        if (p.i != p.s.length()) throw p.err("Višak teksta posle JSON vrednosti");
+        if (p.i != p.s.length()) throw p.err("Extra text after the JSON value");
         return v;
     }
 
     private RuntimeException err(String msg) {
-        return new IllegalArgumentException(msg + " (pozicija " + i + ")");
+        return new IllegalArgumentException(msg + " (position " + i + ")");
     }
 
     private void ws() {
@@ -30,7 +30,7 @@ public final class Json {
     }
 
     private Object value() {
-        if (i >= s.length()) throw err("Neočekivan kraj");
+        if (i >= s.length()) throw err("Unexpected end");
         char c = s.charAt(i);
         switch (c) {
             case '{': return object();
@@ -44,7 +44,7 @@ public final class Json {
     }
 
     private void expect(String word) {
-        if (!s.startsWith(word, i)) throw err("Očekivano " + word);
+        if (!s.startsWith(word, i)) throw err("Expected " + word);
         i += word.length();
     }
 
@@ -55,17 +55,17 @@ public final class Json {
         if (s.charAt(i) == '}') { i++; return m; }
         while (true) {
             ws();
-            if (s.charAt(i) != '"') throw err("Očekivan ključ");
+            if (s.charAt(i) != '"') throw err("Expected a key");
             String k = string();
             ws();
-            if (s.charAt(i) != ':') throw err("Očekivano ':'");
+            if (s.charAt(i) != ':') throw err("Expected ':'");
             i++;
             ws();
             m.put(k, value());
             ws();
             char c = s.charAt(i++);
             if (c == '}') return m;
-            if (c != ',') throw err("Očekivano ',' ili '}'");
+            if (c != ',') throw err("Expected ',' or '}'");
         }
     }
 
@@ -80,7 +80,7 @@ public final class Json {
             ws();
             char c = s.charAt(i++);
             if (c == ']') return a;
-            if (c != ',') throw err("Očekivano ',' ili ']'");
+            if (c != ',') throw err("Expected ',' or ']'");
         }
     }
 
@@ -88,7 +88,7 @@ public final class Json {
         StringBuilder b = new StringBuilder();
         i++;
         while (true) {
-            if (i >= s.length()) throw err("Nezatvoren string");
+            if (i >= s.length()) throw err("Unterminated string");
             char c = s.charAt(i++);
             if (c == '"') return b.toString();
             if (c == '\\') {
@@ -106,7 +106,7 @@ public final class Json {
                         b.append((char) Integer.parseInt(s.substring(i, i + 4), 16));
                         i += 4;
                         break;
-                    default: throw err("Nepoznat escape");
+                    default: throw err("Unknown escape");
                 }
             } else {
                 b.append(c);
@@ -117,11 +117,11 @@ public final class Json {
     private Double number() {
         int st = i;
         while (i < s.length() && "+-0123456789.eE".indexOf(s.charAt(i)) >= 0) i++;
-        if (st == i) throw err("Neočekivan znak '" + s.charAt(i) + "'");
+        if (st == i) throw err("Unexpected character '" + s.charAt(i) + "'");
         return Double.parseDouble(s.substring(st, i));
     }
 
-    // ---------- pisanje ----------
+    // ---------- writing ----------
 
     public static String write(Object v) {
         StringBuilder b = new StringBuilder();

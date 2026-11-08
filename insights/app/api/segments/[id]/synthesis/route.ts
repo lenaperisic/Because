@@ -4,10 +4,10 @@ import { synthesizeSegment } from "@/lib/synthesis";
 
 export const dynamic = "force-dynamic";
 
-/** Sinteza razloga za grupu. Iz keša dok se rezultati ne promene; ?force=1 preskače keš. */
+/** Reason synthesis for a group. From the cache until the results change; ?force=1 skips the cache. */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!Object.hasOwn(SEGMENT_DEFS, id)) return NextResponse.json({ error: `Nema grupe ${id}` }, { status: 404 });
+  if (!Object.hasOwn(SEGMENT_DEFS, id)) return NextResponse.json({ error: `No group ${id}` }, { status: 404 });
   try {
     const force = req.nextUrl.searchParams.get("force") === "1";
     return NextResponse.json(await synthesizeSegment(id as SegmentId, { force }));

@@ -32,7 +32,7 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 
-/** Folio: demo PDF alat sa tri profila (developer, lekar, bankar) koji ga koriste potpuno različito. */
+/** Folio: a demo PDF tool with three profiles (developer, doctor, banker) who use it in completely different ways. */
 public class App {
     final JFrame frame = new JFrame("Folio");
     Model.Profile profile;
@@ -98,7 +98,7 @@ public class App {
         Tracker.track("app_opened", profile);
     }
 
-    // ---------------- akcije ----------------
+    // ---------------- actions ----------------
 
     void refreshAll() {
         frame.setTitle("Folio · " + profile.name);
@@ -133,14 +133,12 @@ public class App {
 
     void toast(String text) { Dialogs.toast(frame, text); }
 
-    /** 1 strana, 2–4 strane, 5+ strana (i 21 strana, 22 strane...). */
+    /** 1 page, 2 pages... */
     static String pagesLabel(int n) {
-        int m10 = n % 10, m100 = n % 100;
-        String w = (m10 == 1 && m100 != 11) ? "strana" : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) ? "strane" : "strana";
-        return n + " " + w;
+        return n + (n == 1 ? " page" : " pages");
     }
 
-    /** Korisnik je kliknuo na alat: izbroj, pošalji događaj i promeni dokument. */
+    /** The user clicked a tool: count it, send the event and update the document. */
     void use(String feature) {
         if (doc == null) return;
         Model.Doc d = doc;
@@ -149,43 +147,43 @@ public class App {
         String base = d.name.replace(".pdf", "");
         switch (feature) {
             case "search":
-                toast("Pretraga: 7 rezultata u dokumentu „" + base + "“");
+                toast("Search: 7 results in “" + base + "”");
                 break;
             case "annotate":
                 d.annotated = !d.annotated;
-                toast(d.annotated ? "Komentar dodat na stranu 1" : "Komentar uklonjen");
+                toast(d.annotated ? "Comment added to page 1" : "Comment removed");
                 break;
             case "sign":
-                if (!d.has("signature")) toast("Ovaj dokument nema polje za potpis");
-                else if (d.signed) toast("Dokument je već potpisan");
-                else { d.signed = true; toast("Dokument je potpisan elektronski"); }
+                if (!d.has("signature")) toast("This document has no signature field");
+                else if (d.signed) toast("This document is already signed");
+                else { d.signed = true; toast("Document signed electronically"); }
                 break;
             case "fill_form":
-                if (!d.has("form")) toast("Ovaj dokument nema polja za popunjavanje");
-                else if (d.filled) toast("Formular je već popunjen");
-                else { d.filled = true; toast("Formular popunjen sa 6 polja"); }
+                if (!d.has("form")) toast("This document has no fields to fill in");
+                else if (d.filled) toast("The form is already filled in");
+                else { d.filled = true; toast("Form filled in: 6 fields"); }
                 break;
             case "ocr":
-                if (!d.scanned) toast("Dokument već ima tekst koji se može pretraživati");
-                else if (d.ocr) toast("Tekst je već prepoznat");
-                else { d.ocr = true; toast("Prepoznat tekst na " + d.pages + (d.pages == 1 ? " strani" : " strana")); }
+                if (!d.scanned) toast("This document already has searchable text");
+                else if (d.ocr) toast("Text has already been recognized");
+                else { d.ocr = true; toast("Text recognized on " + pagesLabel(d.pages)); }
                 break;
             case "redact":
-                if (!d.hasSensitive()) toast("U dokumentu nema ličnih podataka za zacrnjivanje");
-                else { d.redacted = !d.redacted; toast(d.redacted ? "Lični podaci su zacrnjeni" : "Zacrnjivanje uklonjeno"); }
+                if (!d.hasSensitive()) toast("No personal data to redact in this document");
+                else { d.redacted = !d.redacted; toast(d.redacted ? "Personal data redacted" : "Redaction removed"); }
                 break;
             case "compare":
-                if (d.changes.isEmpty()) toast("Nema prethodne verzije za poređenje");
+                if (d.changes.isEmpty()) toast("No previous version to compare with");
                 else Dialogs.compare(this, d);
                 break;
             case "merge":
-                toast("Spojeno: „" + base + "“ i još 2 dokumenta u Dosije.pdf");
+                toast("Merged “" + base + "” and 2 more documents into Case file.pdf");
                 break;
             case "compress":
-                toast("Veličina smanjena sa " + d.size + " za 61%");
+                toast("Size reduced from " + d.size + " by 61%");
                 break;
             case "export_text":
-                toast("Izvezeno u " + base + ".md");
+                toast("Exported to " + base + ".md");
                 break;
             case "ai_summary":
                 Dialogs.summary(this, d);
@@ -197,7 +195,7 @@ public class App {
         refreshAll();
     }
 
-    // ---------------- dugme alata ----------------
+    // ---------------- tool button ----------------
 
     private class ToolButton extends JButton {
         final Model.Feature f;
@@ -247,7 +245,7 @@ public class App {
             g2.setColor(on ? Theme.TEXT : Theme.MUTED);
             Widgets.paintIcon(g2, f.icon, w / 2.0, 22, 18);
             if (attention()) {
-                // Žuta tačka sa crnim obodom: dokument čeka ovaj alat.
+                // Yellow dot with a black outline: the document is waiting for this tool.
                 java.awt.geom.Ellipse2D dot = new java.awt.geom.Ellipse2D.Double(w / 2.0 + 9, 7, 9, 9);
                 g2.setColor(Theme.MARKER);
                 g2.fill(dot);
@@ -258,7 +256,7 @@ public class App {
             g2.setFont(on ? Theme.bold(11.5f) : Theme.font(11.5f));
             FontMetrics fm = g2.getFontMetrics();
             int tw = fm.stringWidth(f.name);
-            // Primenjen alat je podvučen markerom, kao reč u dokumentu.
+            // An applied tool is highlighted with the marker, like a word in a document.
             if (on) Theme.marker(g2, (w - tw) / 2.0 - 4, 38, tw + 8, 14);
             g2.setColor(Theme.TEXT);
             g2.drawString(f.name, (w - tw) / 2f, 49);
@@ -266,7 +264,7 @@ public class App {
         }
     }
 
-    // ---------------- naslov dokumenta ----------------
+    // ---------------- document header ----------------
 
     private class DocHeader extends JComponent {
         DocHeader() {
@@ -295,7 +293,7 @@ public class App {
             g2.drawString(Theme.fit(doc.name, fm, w - kw - 260), x + kw + 12, 31);
             g2.setFont(Theme.font(12.5f));
             g2.setColor(Theme.MUTED);
-            g2.drawString(pagesLabel(doc.pages) + " · " + doc.size + " · izmenjeno " + doc.updated, x, 54);
+            g2.drawString(pagesLabel(doc.pages) + " · " + doc.size + " · modified " + doc.updated, x, 54);
 
             String zoom = "100%";
             g2.setFont(Theme.bold(12.5f));
@@ -318,7 +316,7 @@ public class App {
         }
     }
 
-    // ---------------- gornja traka ----------------
+    // ---------------- top bar ----------------
 
     private class TopBar extends JPanel {
         final List<Widgets.Pill> profiles = new ArrayList<>();
@@ -335,7 +333,7 @@ public class App {
             left.setBorder(new EmptyBorder(0, 12, 0, 0));
             logo = new JComponent() {
                 @Override protected void paintComponent(Graphics g) {
-                    // Znak: reč „Folio“ precrtana markerom, crno na žutom, na crnoj traci.
+                    // Logo: the word "Folio" highlighted with the marker, black on yellow, on the black bar.
                     Graphics2D g2 = Theme.smooth(g);
                     g2.setFont(Theme.bold(23f));
                     FontMetrics fm = g2.getFontMetrics();
@@ -349,7 +347,7 @@ public class App {
             logo.setPreferredSize(new Dimension(140, 42));
             left.add(logo);
             left.add(Box.createHorizontalStrut(Sidebar.SIDE_W - 190));
-            Widgets.Field search = new Widgets.Field("Pretraži dokumente i tekst");
+            Widgets.Field search = new Widgets.Field("Search documents and text");
             search.setPreferredSize(new Dimension(380, 40));
             search.addActionListener(e -> use("search"));
             left.add(search);
@@ -376,7 +374,7 @@ public class App {
         }
     }
 
-    // ---------------- pokretanje ----------------
+    // ---------------- startup ----------------
 
     public static void main(String[] args) {
         System.setProperty("awt.useSystemAAFontSettings", "lcd");
@@ -393,7 +391,7 @@ public class App {
         int docIndex = 0;
         for (int k = 0; k < args.length; k++) {
             switch (args[k]) {
-                case "--profile": profileId = args[++k]; break;
+                case "--profile": profileId = Model.profileId(args[++k]); break;
                 case "--screenshot": shot = args[++k]; break;
                 case "--doc": docIndex = Integer.parseInt(args[++k]); break;
                 case "--do": actions = args[++k]; break;
@@ -426,7 +424,7 @@ public class App {
             Rectangle r = app.frame.getBounds();
             BufferedImage img = new Robot().createScreenCapture(r);
             ImageIO.write(img, "png", new File(out));
-            System.out.println("Snimljeno: " + out);
+            System.out.println("Saved: " + out);
         } catch (Exception ex) {
             ex.printStackTrace();
         }

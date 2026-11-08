@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage, InterviewRecord, InterviewResult } from "@/lib/types";
 
-const SENTIMENT = { neg: "negativan", neu: "neutralan", pos: "pozitivan" } as const;
+const SENTIMENT = { neg: "negative", neu: "neutral", pos: "positive" } as const;
 
 type Props = { userId: string; consent: string; previous: InterviewRecord | null };
 
@@ -16,7 +16,7 @@ export default function Chat({ userId, consent, previous }: Props) {
   const [error, setError] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
 
-  // Telo u zagradama: scrollIntoView u novom Chromium-u vraća Promise, a React bi ga pozvao kao cleanup i pao.
+  // Body in braces: scrollIntoView returns a Promise in newer Chromium, and React would call it as a cleanup and crash.
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, result]);
 
   async function post<T>(url: string, body: unknown): Promise<T> {
@@ -70,7 +70,7 @@ export default function Chat({ userId, consent, previous }: Props) {
       <div className="chat">
         <div className="msg assistant">{consent}</div>
         {messages.map((m, i) => <div key={i} className={`msg ${m.role}`}>{m.content}</div>)}
-        {busy && <div className="muted">{done ? "Pravim sažetak..." : "AI piše..."}</div>}
+        {busy && <div className="muted">{done ? "Summarizing..." : "AI is typing..."}</div>}
         <div ref={bottom} />
       </div>
       {error && <p className="error">{error}</p>}
@@ -78,14 +78,14 @@ export default function Chat({ userId, consent, previous }: Props) {
         <div className="composer">
           <textarea
             value={input}
-            placeholder="Vaš odgovor..."
+            placeholder="Your answer..."
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             disabled={busy}
           />
-          <button onClick={send} disabled={busy || !input.trim()}>Pošalji</button>
+          <button onClick={send} disabled={busy || !input.trim()}>Send</button>
           {messages.length >= 2 && (
-            <button className="secondary" disabled={busy} onClick={() => finish(messages)}>Završi</button>
+            <button className="secondary" disabled={busy} onClick={() => finish(messages)}>Finish</button>
           )}
         </div>
       )}
@@ -97,16 +97,16 @@ export default function Chat({ userId, consent, previous }: Props) {
 function ResultView({ result, earlier, inPosthog }: { result: InterviewResult; earlier: boolean; inPosthog: boolean }) {
   return (
     <div className="card" style={{ marginTop: 16 }}>
-      <h2>{earlier ? "Prethodni rezultat" : "Rezultat intervjua"} {result.simulated && <span className="pill">simulirano</span>}{" "}
-        <span className="pill">{inPosthog ? "✓ upisano u PostHog (ai_main_reason)" : "nije upisano u PostHog"}</span></h2>
+      <h2>{earlier ? "Previous result" : "Interview result"} {result.simulated && <span className="pill">simulated</span>}{" "}
+        <span className="pill">{inPosthog ? "✓ written to PostHog (ai_main_reason)" : "not written to PostHog"}</span></h2>
       <dl className="result">
-        <dt>Glavni razlog</dt><dd>{result.mainReason}</dd>
-        <dt>Sažetak</dt><dd>{result.summary}</dd>
-        {result.reasons.length > 0 && <><dt>Razlozi</dt><dd>{result.reasons.join(" · ")}</dd></>}
-        {result.quotes.length > 0 && <><dt>Citati</dt><dd>{result.quotes.map((q) => `„${q}“`).join(" ")}</dd></>}
-        <dt>Predlog promene</dt><dd>{result.suggestedChange}</dd>
-        <dt>Ton</dt><dd>{SENTIMENT[result.sentiment]}</dd>
-        <dt>Korišćene činjenice</dt><dd>{result.factsUsed.join(", ") || "nijedna"}</dd>
+        <dt>Main reason</dt><dd>{result.mainReason}</dd>
+        <dt>Summary</dt><dd>{result.summary}</dd>
+        {result.reasons.length > 0 && <><dt>Reasons</dt><dd>{result.reasons.join(" · ")}</dd></>}
+        {result.quotes.length > 0 && <><dt>Quotes</dt><dd>{result.quotes.map((q) => `“${q}”`).join(" ")}</dd></>}
+        <dt>Suggested change</dt><dd>{result.suggestedChange}</dd>
+        <dt>Tone</dt><dd>{SENTIMENT[result.sentiment]}</dd>
+        <dt>Facts used</dt><dd>{result.factsUsed.join(", ") || "none"}</dd>
       </dl>
     </div>
   );

@@ -2,10 +2,10 @@ import { FEATURES, label } from "./features";
 import { classify } from "./segments";
 import type { EventCache, Fact, Profile, TodayRow } from "./types";
 
-// Profil korisnika: činjenice koje računa KOD, ne model. AI sme da se poziva samo na njih.
+// User profile: facts computed by CODE, not by the model. The AI may only refer to these.
 
 const DAY = 24 * 3600 * 1000;
-/** Probao pa prestao: 1–2 upotrebe, poslednja starija od ovoliko dana. */
+/** Tried and quit: 1–2 uses, the last one older than this many days. */
 export const QUIT_AFTER_DAYS = 14;
 
 export type FeatureStat = { n: number; first: string; last: string };
@@ -15,7 +15,7 @@ export type UserStats = {
   role: string;
   name: string;
   counts: Record<string, FeatureStat>;
-  /** Ukupno upotreba alata (feature_used), bez otvaranja dokumenata. */
+  /** Total tool uses (feature_used), not counting opened documents. */
   total: number;
   opened: number;
   firstSeen: string;
@@ -55,7 +55,7 @@ export function daysAgo(isoDate: string, now = Date.now()): number {
   return Math.max(0, Math.floor((startOfDay(now) - startOfDay(Date.parse(isoDate))) / DAY));
 }
 
-/** Probao alat 1–2 puta pa prestao (poslednja upotreba starija od 14 dana). */
+/** Tried the tool 1–2 times, then stopped (last use older than 14 days). */
 export function triedAndQuit(s: UserStats, feature: string, now = Date.now()): boolean {
   const c = s.counts[feature];
   return !!c && c.n >= 1 && c.n <= 2 && daysAgo(c.last, now) > QUIT_AFTER_DAYS;
@@ -64,42 +64,42 @@ export function triedAndQuit(s: UserStats, feature: string, now = Date.now()): b
 export function buildFacts(s: UserStats, now = Date.now()): Fact[] {
   const texts: string[] = [];
 
-  if (s.role) texts.push(`Uloga u Folio-u: ${s.role}.`);
+  if (s.role) texts.push(`Role in Folio: ${s.role}.`);
 
-  // Današnja aktivnost (najvažnije za pitanje „danas ste...“).
-  // Po jedna činjenica po alatu, sa vrstama dokumenata na kojima je korišćen.
+  // Today's activity (the most important input for "today you...").
+  // One fact per tool, with the document types it was used on.
   const usedToday = groupToday(s.today.filter((t) => t.event === "feature_used" && t.feature), (t) => t.feature);
   for (const [f, g] of usedToday) {
-    texts.push(`Danas: ${label(f)} ${times(g.n)}${g.kinds.length ? ` (dokumenti: ${g.kinds.join(", ")})` : ""}.`);
+    texts.push(`Today: used ${label(f)} ${times(g.n)}${g.kinds.length ? ` (documents: ${g.kinds.join(", ")})` : ""}.`);
   }
   const openedToday = groupToday(s.today.filter((t) => t.event === "document_opened"), () => "opened");
   for (const [, g] of openedToday) {
-    texts.push(`Danas otvoreno dokumenata: ${g.n}${g.kinds.length ? ` (${g.kinds.join(", ")})` : ""}.`);
+    texts.push(`Documents opened today: ${g.n}${g.kinds.length ? ` (${g.kinds.join(", ")})` : ""}.`);
   }
 
-  // Upotreba svakog alata u poslednjih 30 dana.
+  // Use of each tool in the last 30 days.
   const used = Object.entries(s.counts).filter(([, c]) => c.n > 0).sort((a, b) => b[1].n - a[1].n);
   for (const [f, c] of used) {
     if (triedAndQuit(s, f, now)) {
-      texts.push(`${label(f)}: korišćen samo ${times(c.n)}, poslednji put ${when(c.last, now)}, od tada nijednom.`);
+      texts.push(`${label(f)}: used only ${times(c.n)}, last used ${when(c.last, now)}, and not once since.`);
     } else {
-      texts.push(`${label(f)}: ${times(c.n)} u poslednjih 30 dana, poslednji put ${when(c.last, now)}.`);
+      texts.push(`${label(f)}: ${times(c.n)} in the last 30 days, last used ${when(c.last, now)}.`);
     }
   }
 
   if (used.length && s.total > 0) {
     const [topF, topC] = used[0];
-    texts.push(`Najkorišćeniji alat: ${label(topF)} (${Math.round((100 * topC.n) / s.total)}% svih upotreba alata).`);
+    texts.push(`Most used tool: ${label(topF)} (${Math.round((100 * topC.n) / s.total)}% of all tool uses).`);
   }
 
   const never = FEATURES.filter((f) => !s.counts[f] || s.counts[f].n === 0);
-  if (never.length) texts.push(`Nijednom korišćeno u poslednjih 30 dana: ${never.map(label).join(", ")}.`);
+  if (never.length) texts.push(`Never used in the last 30 days: ${never.map(label).join(", ")}.`);
 
-  if (s.opened > 0) texts.push(`Otvorenih dokumenata u poslednjih 30 dana: ${s.opened}.`);
-  texts.push(`Ukupno upotreba alata u poslednjih 30 dana: ${s.total}.`);
+  if (s.opened > 0) texts.push(`Documents opened in the last 30 days: ${s.opened}.`);
+  texts.push(`Total tool uses in the last 30 days: ${s.total}.`);
 
   const firstDays = daysAgo(s.firstSeen, now);
-  if (firstDays < 7) texts.push(`Prvi put u Folio-u: ${when(s.firstSeen, now)}.`);
+  if (firstDays < 7) texts.push(`First time in Folio: ${when(s.firstSeen, now)}.`);
 
   return texts.map((text, i) => ({ id: `f${i + 1}`, text }));
 }
@@ -110,7 +110,7 @@ export function buildProfile(cache: EventCache, userId: string, now = Date.now()
   return { userId, role: s.role, segmentId: classify(s, now).segmentId, facts: buildFacts(s, now) };
 }
 
-// ---- pomoćno ----
+// ---- helpers ----
 
 function startOfDay(t: number) {
   const d = new Date(t);
@@ -118,7 +118,7 @@ function startOfDay(t: number) {
   return d.getTime();
 }
 
-/** Sabere današnje redove po ključu; vrste dokumenata poređa od najčešće. */
+/** Sums today's rows by key; document types sorted from most to least common. */
 function groupToday(rows: TodayRow[], key: (t: TodayRow) => string) {
   const m = new Map<string, { n: number; kinds: Map<string, number> }>();
   for (const t of rows) {
@@ -136,15 +136,17 @@ function minIso(xs: string[]) {
   return xs.filter(Boolean).sort()[0];
 }
 
-/** 1 put, 2 puta, 5 puta, 21 put. */
+/** once, twice, 5 times. */
 export function times(n: number) {
-  return `${n} ${n % 10 === 1 && n % 100 !== 11 ? "put" : "puta"}`;
+  if (n === 1) return "once";
+  if (n === 2) return "twice";
+  return `${n} times`;
 }
 
-/** danas, juče, pre 3 dana, pre 21 dan. */
+/** today, yesterday, 3 days ago. */
 export function when(isoDate: string, now = Date.now()) {
   const d = daysAgo(isoDate, now);
-  if (d === 0) return "danas";
-  if (d === 1) return "juče";
-  return `pre ${d} ${d % 10 === 1 && d % 100 !== 11 ? "dan" : "dana"}`;
+  if (d === 0) return "today";
+  if (d === 1) return "yesterday";
+  return `${d} days ago`;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loadCache } from "@/lib/posthog";
+import { isSample } from "@/lib/sample";
 import { buildSegments } from "@/lib/segments";
 import { listInterviews } from "@/lib/store";
 import AutoRefresh from "./AutoRefresh";
@@ -7,23 +8,23 @@ import RefreshButton from "./RefreshButton";
 
 export const dynamic = "force-dynamic";
 
-// Grub pregled za Checkpoint 1 (pravi dashboard je faza 2).
+// Rough overview for Checkpoint 1 (the real dashboard is phase 2).
 export default function Home() {
   const cache = loadCache();
   const segments = buildSegments(cache);
   const done = new Map(listInterviews().map((r) => [r.result.userId, r.result]));
   const name = new Map(cache.people.map((p) => [p.distinct_id, p.name]));
-  // Prave Folio osobe (ne seed) prve, da se demo osoba odmah vidi.
+  // Real Folio people (not samples) first, so the demo person shows up right away.
   const order = (ids: string[]) =>
-    [...ids].sort((a, b) => Number(a.startsWith("seed_")) - Number(b.startsWith("seed_")) || a.localeCompare(b));
+    [...ids].sort((a, b) => Number(isSample(a)) - Number(isSample(b)) || a.localeCompare(b));
 
   return (
     <main>
-      <h1>Grupe korisnika Folio-a</h1>
-      <p className="lede">PostHog vam kaže šta korisnici rade. Because ih pita zašto, i to svakog o onome što je on uradio.</p>
+      <h1>Folio user groups</h1>
+      <p className="lede">PostHog tells you what users do. Because asks them why, each one about what they actually did.</p>
       <p className="muted">
-        Izvor: {cache.source === "posthog" ? "PostHog" : "lokalna seed rezerva"} · {cache.people.length} osoba
-        {cache.fetchedAt && ` · ${new Date(cache.fetchedAt).toLocaleString("sr-RS")}`} · <RefreshButton />
+        Source: {cache.source === "posthog" ? "PostHog" : "local seed backup"} · {cache.people.length} people
+        {cache.fetchedAt && ` · ${new Date(cache.fetchedAt).toLocaleString("en-GB")}`} · <RefreshButton />
       </p>
       <AutoRefresh />
       <div className="grid">
@@ -32,8 +33,8 @@ export default function Home() {
             <h2><Link href={`/segment/${s.id}`}>{s.name}</Link> <span className="pill">{s.userIds.length}</span></h2>
             <p className="muted">{s.researchQuestion}</p>
             <p className="muted">
-              Intervjuisano <b>{s.userIds.filter((id) => done.has(id)).length}</b> od {s.userIds.length} ·{" "}
-              <Link href={`/segment/${s.id}`}>Sinteza i razlozi →</Link>
+              Interviewed <b>{s.userIds.filter((id) => done.has(id)).length}</b> of {s.userIds.length} ·{" "}
+              <Link href={`/segment/${s.id}`}>Synthesis and reasons →</Link>
             </p>
             <ul className="users">
               {order(s.userIds).map((id) => (

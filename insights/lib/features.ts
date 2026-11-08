@@ -1,22 +1,23 @@
-/** Alati iz Folio-a (vrednosti `feature` u događaju `feature_used`). */
+/** Folio tools (values of `feature` in the `feature_used` event). */
 export const FEATURES = [
   "search", "annotate", "sign", "fill_form", "ocr", "redact",
   "compare", "merge", "compress", "export_text", "ai_summary",
 ] as const;
 export type Feature = (typeof FEATURES)[number];
 
+/** Same names as the Folio toolbar, so the interviewer uses the words the user sees. */
 export const FEATURE_LABEL: Record<string, string> = {
-  search: "Pretraga",
-  annotate: "Komentar",
-  sign: "Potpis",
-  fill_form: "Formular",
+  search: "Search",
+  annotate: "Comment",
+  sign: "Sign",
+  fill_form: "Fill form",
   ocr: "OCR",
-  redact: "Zacrnjivanje",
-  compare: "Poređenje verzija",
-  merge: "Spajanje",
-  compress: "Kompresija",
-  export_text: "Izvoz u tekst",
-  ai_summary: "AI sažetak",
+  redact: "Redact",
+  compare: "Compare versions",
+  merge: "Merge",
+  compress: "Compress",
+  export_text: "Export text",
+  ai_summary: "AI summary",
 };
 
 export const label = (f: string) => FEATURE_LABEL[f] ?? f;

@@ -1,15 +1,16 @@
-// Seed: ~200 osoba sa Folio događajima za poslednjih 30 dana.
+// Seed: ~200 sample people with Folio events over the last 30 days.
 //
-//   npm run seed              -> šalje u PostHog (batch, historical_migration) + lokalna rezerva
-//   npm run seed -- --dry-run -> samo lokalna rezerva (data/seed-backup.json)
+//   npm run seed              -> sends to PostHog (batch, historical_migration) + local backup
+//   npm run seed -- --dry-run -> local backup only (data/seed-backup.json)
 //
-// Broj upotreba po alatu = `usage` iz Folio JSON-a za tu ulogu × nasumično 0,5–1,5,
-// da grupe ne budu savršeno čiste. Nasumičnost je deterministička (isti seed = isti podaci).
+// Uses per tool = `usage` from the Folio JSON for that role × a random 0.5–1.5,
+// so the groups are not perfectly clean. The randomness is deterministic (same seed = same data).
 
 import fs from "node:fs";
 import path from "node:path";
 import { loadEnv } from "../lib/env";
 import { SEED_BACKUP_FILE, writeJson } from "../lib/posthog";
+import { SAMPLE_PREFIX } from "../lib/sample";
 import type { EventCache, PersonRow, TodayRow, UsageRow } from "../lib/types";
 
 loadEnv();
@@ -19,7 +20,7 @@ const HOST = (process.env.POSTHOG_HOST || "https://eu.i.posthog.com").replace(/\
 const NOW = Date.now();
 const DAY = 24 * 3600 * 1000;
 
-// ---- deterministička nasumičnost ----
+// ---- deterministic randomness ----
 let state = 20261107;
 function rand() {
   state |= 0; state = (state + 0x6d2b79f5) | 0;
@@ -30,7 +31,7 @@ function rand() {
 const between = (a: number, b: number) => a + rand() * (b - a);
 const pick = <T>(xs: T[]) => xs[Math.floor(rand() * xs.length)];
 
-// ---- uloge ----
+// ---- roles ----
 type Usage = Record<string, number>;
 type RoleDef = { id: string; role: string; count: number; usage: Usage; kinds: string[] };
 
@@ -39,16 +40,17 @@ function folioUsage(id: string): Usage {
   return (JSON.parse(fs.readFileSync(file, "utf8")) as { usage: Usage }).usage;
 }
 
+// Document types match the `kind` values in Folio's own data.
 const ROLES: RoleDef[] = [
-  { id: "lekar", role: "Lekar", count: 60, usage: folioUsage("lekar"), kinds: ["Nalaz", "Formular", "Sken", "Izveštaj", "Smernice"] },
-  { id: "developer", role: "Developer", count: 50, usage: folioUsage("developer"), kinds: ["Specifikacija", "RFC", "Faktura", "Ugovor", "Dokumentacija"] },
-  { id: "bankar", role: "Bankar", count: 50, usage: folioUsage("bankar"), kinds: ["Ugovor", "Formular", "Finansije", "Sken", "Izveštaj"] },
+  { id: "doctor", role: "Doctor", count: 60, usage: folioUsage("doctor"), kinds: ["Lab report", "Form", "Scan", "Report", "Guidelines"] },
+  { id: "developer", role: "Developer", count: 50, usage: folioUsage("developer"), kinds: ["Spec", "RFC", "Invoice", "Contract", "Docs"] },
+  { id: "banker", role: "Banker", count: 50, usage: folioUsage("banker"), kinds: ["Contract", "Form", "Financials", "Scan", "Report"] },
   {
-    id: "pravnik", role: "Pravnik", count: 20, kinds: ["Ugovor", "Aneks", "Punomoćje", "Presuda"],
+    id: "lawyer", role: "Lawyer", count: 20, kinds: ["Contract", "Annex", "Power of attorney", "Judgment"],
     usage: { read: 150, search: 14, annotate: 48, sign: 30, fill_form: 4, ocr: 6, redact: 22, compare: 70, merge: 12, compress: 3, export_text: 4, ai_summary: 0 },
   },
   {
-    id: "student", role: "Student", count: 20, kinds: ["Skripta", "Rad", "Prezentacija"],
+    id: "student", role: "Student", count: 20, kinds: ["Lecture notes", "Paper", "Slides"],
     usage: { read: 18, search: 2, annotate: 4, sign: 0, fill_form: 0, ocr: 0, redact: 0, compare: 0, merge: 1, compress: 1, export_text: 1, ai_summary: 0 },
   },
 ];
@@ -58,7 +60,7 @@ const FIRST = ["Ana", "Marko", "Jelena", "Nikola", "Milica", "Stefan", "Ivana", 
 const LAST = ["Jovanović", "Petrović", "Nikolić", "Marković", "Đorđević", "Stojanović", "Ilić", "Stanković", "Pavlović",
   "Milošević", "Popović", "Kostić", "Savić", "Lukić", "Todorović", "Ristić", "Simić", "Kovačević"];
 
-// ---- generisanje ----
+// ---- generation ----
 type Ev = { event: string; distinct_id: string; timestamp: string; properties: Record<string, unknown> };
 
 const events: Ev[] = [];
@@ -71,29 +73,29 @@ function ts(fromDaysAgo: number, toDaysAgo: number) {
 
 for (const r of ROLES) {
   for (let i = 1; i <= r.count; i++) {
-    const id = `seed_${r.id}_${String(i).padStart(3, "0")}`;
+    const id = `${SAMPLE_PREFIX}${r.id}_${String(i).padStart(3, "0")}`;
     const name = `${pick(FIRST)} ${pick(LAST)}`;
     persons.push({ id, name, role: r.role });
 
-    // Oko 10% (i pola studenata) su novi: prvi dolazak u poslednjih 1–6 dana i manje aktivnosti.
+    // About 10% (and half the students) are new: first visit in the last 1–6 days and less activity.
     const isNew = r.id === "student" ? rand() < 0.5 : rand() < 0.1;
     const span = isNew ? Math.floor(between(1, 6)) : 30;
     const volume = isNew ? span / 30 : 1;
 
     const usage: Usage = { ...r.usage };
 
-    // Namerni detalji iz plana.
-    let aiOld = 0; // AI sažetak probao 1–2 puta pre 18–24 dana pa prestao
+    // Deliberate details from the plan.
+    let aiOld = 0; // tried the AI summary 1–2 times 18–24 days ago, then stopped
     if (r.id === "developer") {
       usage.ai_summary = 0;
       if (i <= 15) aiOld = rand() < 0.5 ? 1 : 2;
     }
-    if (r.id === "lekar") {
+    if (r.id === "doctor") {
       usage.ai_summary = 0;
-      if (i <= 3) aiOld = 1; // „skoro niko“
+      if (i <= 3) aiOld = 1; // "almost nobody"
     }
-    if (r.id === "bankar") {
-      if (i % 3 === 0) usage.ai_summary = Math.round(between(10, 20)); // trećina redovno
+    if (r.id === "banker") {
+      if (i % 3 === 0) usage.ai_summary = Math.round(between(10, 20)); // a third use it regularly
       else { usage.ai_summary = 0; if (i <= 4) aiOld = 1; }
     }
     if (isNew) aiOld = 0;
@@ -117,7 +119,7 @@ for (const r of ROLES) {
   }
 }
 
-// ---- lokalna rezerva u istom obliku kao keš iz PostHoga ----
+// ---- local backup in the same shape as the PostHog cache ----
 function aggregate(evs: Ev[]): EventCache {
   const usage = new Map<string, UsageRow>();
   const people = new Map<string, PersonRow>();
@@ -152,7 +154,7 @@ function aggregate(evs: Ev[]): EventCache {
   return { fetchedAt: new Date(NOW).toISOString(), source: "seed-local", usage: [...usage.values()], people: [...people.values()], today: [...today.values()] };
 }
 
-// ---- slanje u PostHog ----
+// ---- sending to PostHog ----
 async function sendBatches() {
   const CHUNK = 1000;
   for (let i = 0; i < events.length; i += CHUNK) {
@@ -166,26 +168,26 @@ async function sendBatches() {
       if (res.ok) break;
       const msg = `PostHog batch ${res.status}: ${(await res.text()).slice(0, 200)}`;
       if (attempt >= 3) throw new Error(msg);
-      console.warn(`${msg} (pokušaj ${attempt}, ponavljam)`);
+      console.warn(`${msg} (attempt ${attempt}, retrying)`);
       await new Promise((r) => setTimeout(r, 1000 * attempt));
     }
-    process.stdout.write(`\r  poslato ${Math.min(i + CHUNK, events.length)} / ${events.length}`);
+    process.stdout.write(`\r  sent ${Math.min(i + CHUNK, events.length)} / ${events.length}`);
   }
   process.stdout.write("\n");
 }
 
 async function main() {
   events.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-  console.log(`Generisano: ${persons.length} osoba, ${events.length} događaja.`);
+  console.log(`Generated: ${persons.length} people, ${events.length} events.`);
   writeJson(SEED_BACKUP_FILE, aggregate(events));
-  console.log(`Lokalna rezerva: ${path.relative(process.cwd(), SEED_BACKUP_FILE)}`);
+  console.log(`Local backup: ${path.relative(process.cwd(), SEED_BACKUP_FILE)}`);
   if (DRY) {
-    console.log(process.env.POSTHOG_KEY ? "--dry-run: ništa nije poslato u PostHog." : "POSTHOG_KEY nije postavljen: ništa nije poslato u PostHog.");
+    console.log(process.env.POSTHOG_KEY ? "--dry-run: nothing was sent to PostHog." : "POSTHOG_KEY is not set: nothing was sent to PostHog.");
     return;
   }
-  console.log(`Šaljem u ${HOST} ...`);
+  console.log(`Sending to ${HOST} ...`);
   await sendBatches();
-  console.log("Gotovo. PostHogu treba par minuta da događaji budu vidljivi u upitima.");
+  console.log("Done. PostHog needs a few minutes before the events show up in queries.");
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { NO_REASON } from "@/lib/interview";
 import { loadCache } from "@/lib/posthog";
+import { isSample } from "@/lib/sample";
 import { buildSegments } from "@/lib/segments";
 import { listInterviews } from "@/lib/store";
 import type { InterviewResult } from "@/lib/types";
@@ -10,26 +12,23 @@ import Synthesis from "./Synthesis";
 
 export const dynamic = "force-dynamic";
 
-// Ekran grupe: ko je u grupi, ko je intervjuisan i koji glavni razlozi se ponavljaju.
-// Sintezu (Claude) povlači klijent posle učitavanja; „Razlozi“ desno grupiše kod, bez AI-ja.
+// Group screen: who is in the group, who was interviewed and which main reasons repeat.
+// The client fetches the synthesis (Claude) after loading; "Reasons" on the right is grouped by code, no AI.
 
-const SENTIMENT: Record<string, string> = { neg: "negativan", neu: "neutralan", pos: "pozitivan" };
-/** Glavni razlog kad korisnik nije dao razlog (lib/interview.ts); u listi razloga ide poslednji. */
-const NO_REASON = "nije naveden razlog";
+const SENTIMENT: Record<string, string> = { neg: "negative", neu: "neutral", pos: "positive" };
 const QUOTES_PER_REASON = 2;
 
 type Quote = { text: string; userId: string; simulated: boolean };
 type ReasonGroup = { key: string; label: string; count: number; simulated: number; quotes: Quote[] };
 
-const isSeed = (id: string) => id.startsWith("seed_");
 const interviewHref = (id: string) => `/interview/${encodeURIComponent(id)}`;
 
-/** Jedan razmak, bez tačke na kraju. */
+/** Single spaces, no period at the end. */
 const tidy = (s: string) => s.trim().replace(/\s+/g, " ").replace(/[.!…]+$/u, "");
-/** Ključ za grupisanje: isti razlog bez obzira na velika slova i tačku na kraju. */
+/** Grouping key: the same reason regardless of capitalization and a trailing period. */
 const reasonKey = (s: string) => tidy(s).toLowerCase();
 
-/** Do `max` citata: prvo iz pravih intervjua, po jedan od svake osobe, bez ponavljanja. */
+/** Up to `max` quotes: real interviews first, one from each person, no repeats. */
 function pickQuotes(results: InterviewResult[], max: number): Quote[] {
   const ordered = [...results].sort((a, b) => Number(!!a.simulated) - Number(!!b.simulated));
   const longest = Math.max(0, ...ordered.map((r) => r.quotes?.length ?? 0));
@@ -47,7 +46,7 @@ function pickQuotes(results: InterviewResult[], max: number): Quote[] {
   return out;
 }
 
-/** Isti glavni razlog = ista stavka. Redom po broju osoba, a „nije naveden razlog“ na kraju. */
+/** Same main reason = same item. Sorted by number of people, with "no reason given" last. */
 function groupReasons(results: InterviewResult[]): ReasonGroup[] {
   const byKey = new Map<string, InterviewResult[]>();
   for (const r of results) {
@@ -56,7 +55,7 @@ function groupReasons(results: InterviewResult[]): ReasonGroup[] {
   }
   return [...byKey]
     .map(([key, rs]) => {
-      // Tekst stavke: kako ga je zapisao pravi intervju, ako ga ima.
+      // Item text: as a real interview wrote it, if there is one.
       const text = key === NO_REASON ? NO_REASON : tidy((rs.find((r) => !r.simulated) ?? rs[0]).mainReason);
       return {
         key,
@@ -89,38 +88,38 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
     if (record.completedAt > latest) latest = record.completedAt;
   }
   const done = [...results.values()];
-  // Menja se kad stigne nov (ili ponovljen) intervju, pa sinteza tada povuče novu verziju.
+  // Changes when a new (or repeated) interview arrives, so the synthesis then fetches a new version.
   const resultsVersion = `${done.length}:${latest}`;
   const simulated = done.filter((r) => r.simulated).length;
   const reasons = groupReasons(done);
-  // Prave Folio osobe (ne seed) prve, pa intervjuisani, pa po ID-ju.
+  // Real Folio people (not samples) first, then the interviewed ones, then by ID.
   const rows = [...segment.userIds].sort((a, b) =>
-    Number(isSeed(a)) - Number(isSeed(b)) ||
+    Number(isSample(a)) - Number(isSample(b)) ||
     Number(!results.has(a)) - Number(!results.has(b)) ||
     a.localeCompare(b));
 
   return (
     <main>
-      <p className="muted"><Link href="/">← Grupe</Link></p>
+      <p className="muted"><Link href="/">← Groups</Link></p>
       <h1>{segment.name} <span className="pill">{personCount(segment.userIds.length)}</span></h1>
       <p className="lede">{segment.researchQuestion}</p>
       <p className="muted">{segment.why}</p>
       <p>
-        Intervjuisano <b>{done.length} od {segment.userIds.length}</b>
-        {simulated > 0 && <span className="muted"> (simulirano: {simulated})</span>}
+        Interviewed <b>{done.length} of {segment.userIds.length}</b>
+        {simulated > 0 && <span className="muted"> (simulated: {simulated})</span>}
       </p>
       <AutoRefresh />
       <Synthesis segmentId={segment.id} version={resultsVersion} interviews={done.length} />
       <div className="split">
         <section className="card table-card">
-          <h2>Korisnici</h2>
+          <h2>Users</h2>
           {rows.length === 0 ? (
-            <p className="muted">U ovoj grupi trenutno nema nikoga.</p>
+            <p className="muted">There is no one in this group right now.</p>
           ) : (
             <div className="table-wrap">
               <table className="people">
                 <thead>
-                  <tr><th>Osoba</th><th>Ime</th><th>Uloga</th><th>Intervju</th><th>Glavni razlog</th><th>Ton</th></tr>
+                  <tr><th>Person</th><th>Name</th><th>Role</th><th>Interview</th><th>Main reason</th><th>Tone</th></tr>
                 </thead>
                 <tbody>
                   {rows.map((userId) => {
@@ -130,12 +129,12 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
                       <tr key={userId}>
                         <td>
                           <Link href={interviewHref(userId)}>{userId}</Link>
-                          {!isSeed(userId) && <> <span className="pill live">uživo</span></>}
+                          {!isSample(userId) && <> <span className="pill live">live</span></>}
                         </td>
                         <td>{person?.name || "—"}</td>
                         <td>{person?.role || "—"}</td>
                         <td className="nowrap">
-                          {r ? <>✓{r.simulated && <> <span className="pill sim">simulirano</span></>}</> : <span className="muted">—</span>}
+                          {r ? <>✓{r.simulated && <> <span className="pill sim">simulated</span></>}</> : <span className="muted">—</span>}
                         </td>
                         <td>{r?.mainReason}</td>
                         <td>{r && (SENTIMENT[r.sentiment] ?? r.sentiment)}</td>
@@ -148,23 +147,23 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
           )}
         </section>
         <aside className="card">
-          <h2>Razlozi</h2>
+          <h2>Reasons</h2>
           {reasons.length === 0 ? (
-            <p className="muted">Još nema intervjua u ovoj grupi. Otvorite osobu iz tabele i pokrenite intervju.</p>
+            <p className="muted">No interviews in this group yet. Open a person from the table and start an interview.</p>
           ) : (
             <>
-              <p className="muted">Glavni razlozi iz intervjua, grupisani kodom po istom tekstu (bez AI-ja).</p>
+              <p className="muted">Main reasons from the interviews, grouped by code on identical text (no AI).</p>
               <ul className="reasons">
                 {reasons.map((g) => (
                   <li key={g.key}>
                     <b>{g.label}</b> <span className="pill">{personCount(g.count)}</span>
                     {g.simulated > 0 && (
-                      <> <span className="pill sim">{g.simulated === g.count ? "simulirano" : `simulirano: ${g.simulated}`}</span></>
+                      <> <span className="pill sim">{g.simulated === g.count ? "simulated" : `simulated: ${g.simulated}`}</span></>
                     )}
                     {g.quotes.map((q) => (
                       <blockquote key={`${q.userId}|${q.text}`} className="quote">
-                        <span className="qm" aria-hidden="true">„</span>{q.text}“ <span className="muted">— <Link href={interviewHref(q.userId)}>{q.userId}</Link></span>
-                        {q.simulated && <> <span className="pill sim">simulirano</span></>}
+                        <span className="qm" aria-hidden="true">“</span>{q.text}” <span className="muted">— <Link href={interviewHref(q.userId)}>{q.userId}</Link></span>
+                        {q.simulated && <> <span className="pill sim">simulated</span></>}
                       </blockquote>
                     ))}
                   </li>

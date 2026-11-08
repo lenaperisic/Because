@@ -21,7 +21,7 @@ import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 
-/** Prozorčići unutar glavnog prozora: AI sažetak, poređenje verzija i kratka obaveštenja. */
+/** Small windows inside the main window: AI summary, version comparison and short notifications. */
 public final class Dialogs {
     private Dialogs() {}
 
@@ -43,7 +43,7 @@ public final class Dialogs {
         }
     }
 
-    /** Zatamnjena pozadina sa karticom u sredini. */
+    /** Dimmed background with a card in the middle. */
     static final class Overlay extends JPanel {
         private final JFrame frame;
         private final java.awt.event.ComponentAdapter resizer;
@@ -108,7 +108,7 @@ public final class Dialogs {
         JComponent t = new JComponent() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = Theme.smooth(g);
-                // Isti znak za sve dijaloge: crni obod, ikonica mastilom (boja dijaloga se ne koristi).
+                // Same badge for every dialog: black outline, icon in ink (the dialog color is not used).
                 g2.setColor(Theme.BG);
                 g2.fill(new Ellipse2D.Double(0.5, 2.5, 39, 39));
                 g2.setColor(Theme.TEXT);
@@ -127,7 +127,7 @@ public final class Dialogs {
         };
         t.setPreferredSize(new Dimension(440, 46));
         row.add(t, BorderLayout.CENTER);
-        Widgets.IconButton x = new Widgets.IconButton(Widgets.Icon.CLOSE, "Zatvori");
+        Widgets.IconButton x = new Widgets.IconButton(Widgets.Icon.CLOSE, "Close");
         x.addActionListener(e -> close.run());
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         right.setOpaque(false);
@@ -137,11 +137,11 @@ public final class Dialogs {
         return row;
     }
 
-    /** AI sažetak dokumenta. */
+    /** AI summary of the document. */
     public static void summary(App app, Model.Doc d) {
         JPanel body = column();
         Overlay[] holder = new Overlay[1];
-        body.add(header(Widgets.Icon.SPARK, Theme.hex("#A142F4"), "AI sažetak", d.name, () -> holder[0].close()));
+        body.add(header(Widgets.Icon.SPARK, Theme.hex("#A142F4"), "AI summary", d.name, () -> holder[0].close()));
         List<String> items = d.summary;
         JComponent list = new JComponent() {
             @Override protected void paintComponent(Graphics g) {
@@ -160,14 +160,15 @@ public final class Dialogs {
                 }
                 g2.setFont(Theme.font(12f));
                 g2.setColor(Theme.FAINT);
-                g2.drawString("Sažetak je napravio AI. Proverite ključne podatke u dokumentu.", 4, y + 6);
+                g2.drawString("This summary was written by AI. Check key details in the document.", 4, y + 6);
                 g2.dispose();
             }
         };
         FontMetrics fmList = list.getFontMetrics(Theme.font(14.5f));
         int lines = 0;
         for (String s : items) lines += Page.wrap(s, fmList, 500 - 30).size();
-        list.setPreferredSize(new Dimension(500, 18 + lines * 22 + items.size() * 10 + 4));
+        // + 24 for the "written by AI" note under the list.
+        list.setPreferredSize(new Dimension(500, 18 + lines * 22 + items.size() * 10 + 24));
         list.setAlignmentX(Component.LEFT_ALIGNMENT);
         list.setBorder(new EmptyBorder(14, 0, 0, 0));
         body.add(javax.swing.Box.createVerticalStrut(14));
@@ -176,12 +177,13 @@ public final class Dialogs {
         holder[0].open();
     }
 
-    /** Poređenje sa prethodnom verzijom. */
+    /** Comparison with the previous version. */
     public static void compare(App app, Model.Doc d) {
         JPanel body = column();
         Overlay[] holder = new Overlay[1];
-        body.add(header(Widgets.Icon.COMPARE, Theme.hex("#4285F4"), "Poređenje sa prethodnom verzijom",
-                d.changes.size() / 2 + " izmene · " + d.name, () -> holder[0].close()));
+        int n = d.changes.size() / 2;
+        body.add(header(Widgets.Icon.COMPARE, Theme.hex("#4285F4"), "Compared with the previous version",
+                n + (n == 1 ? " change · " : " changes · ") + d.name, () -> holder[0].close()));
         JComponent diff = new JComponent() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = Theme.smooth(g);
@@ -210,7 +212,7 @@ public final class Dialogs {
         holder[0].open();
     }
 
-    /** Kratko obaveštenje na dnu prozora. */
+    /** Short notification at the bottom of the window. */
     public static void toast(JFrame frame, String text) {
         JLayeredPane lp = frame.getLayeredPane();
         JComponent t = new JComponent() {

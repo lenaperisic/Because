@@ -1,15 +1,14 @@
-// Zajedničko za ekran grupe (server) i sintezu (klijent).
+// Shared by the group screen (server) and the synthesis (client).
 
-/** 1 osoba, 2 osobe, 5 osoba, 22 osobe. */
+/** 1 person, 2 people. */
 export function personCount(n: number) {
-  const few = n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14);
-  return `${n} ${few ? "osobe" : "osoba"}`;
+  return `${n} ${n === 1 ? "person" : "people"}`;
 }
 
-/** Parovi navodnika kojima model ponekad obavije ceo citat. */
+/** Quote pairs the model sometimes wraps an entire quote in. */
 const QUOTE_PAIRS = ["„“", "„”", "“”", "«»", "»«", '""'];
 
-/** Citat bez navodnika, samo ako je njima obavijen ceo citat; navodnike unutar citata ne dira. */
+/** The quote without quotation marks, only if they wrap the whole quote; marks inside the quote stay. */
 export function cleanQuote(q: string) {
   const t = q.trim();
   const open = t.charAt(0), close = t.charAt(t.length - 1), inner = t.slice(1, -1);

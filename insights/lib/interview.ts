@@ -3,57 +3,59 @@ import { complete, RefusalError, type Turn } from "./llm";
 import { SEGMENT_DEFS, type SegmentId } from "./segments";
 import type { ChatMessage, InterviewResult, Profile } from "./types";
 
-// Jedini deo gde AI odlučuje. Sve činjenice o korisniku su izračunate pre toga (lib/facts.ts),
-// a model sme da se poziva samo na njih.
+// The only part where the AI decides. All facts about the user are computed before this (lib/facts.ts),
+// and the model may only refer to them.
 
 export const MAX_QUESTIONS = 6;
-/** Model završava razgovor ovim markerom; server ga skida pre slanja korisniku. */
-const END = "[KRAJ]";
+/** The model ends the conversation with this marker; the server strips it before sending to the user. */
+const END = "[END]";
+/** Main reason when the user gave none; the group screen and synthesis rely on this exact text. */
+export const NO_REASON = "no reason given";
 
-/** Fiksna prva poruka: AI se predstavlja i traži pristanak (bez čekanja na model). */
+/** Fixed first message: the AI introduces itself and asks for consent (no waiting for the model). */
 export const CONSENT_MESSAGE =
-  "Zdravo! Ja sam AI asistent i vodim kratak razgovor (2–3 minuta) o tome kako koristite Folio. " +
-  "Pitaću vas samo o onome što ste zaista radili u alatu, a odgovori pomažu timu da ga poboljša. " +
-  "Možete prekinuti kad god želite. Da li pristajete da počnemo?";
+  "Hi! I'm an AI assistant, and I'd like to have a short conversation (2–3 minutes) about how you use Folio. " +
+  "I'll only ask about things you actually did in the tool, and your answers help the team improve it. " +
+  "You can stop at any time. Is it okay if we start?";
 
-/** Prazna korisnička poruka pre pozdrava, jer razgovor sa API-jem počinje korisnikom. */
-const OPENING_USER_TURN = "(Korisnik je otvorio stranicu intervjua.)";
+/** Placeholder user turn before the greeting, because the API conversation has to start with the user. */
+const OPENING_USER_TURN = "(The user opened the interview page.)";
 
 function segmentOf(profile: Profile) {
-  return SEGMENT_DEFS[profile.segmentId as SegmentId] ?? SEGMENT_DEFS.novi;
+  return SEGMENT_DEFS[profile.segmentId as SegmentId] ?? SEGMENT_DEFS.new;
 }
 
 export function systemPrompt(profile: Profile): string {
   const seg = segmentOf(profile);
   const facts = profile.facts.map((f) => `- [${f.id}] ${f.text}`).join("\n");
-  return `Ti si AI istraživač korisničkog iskustva za Folio, PDF alat. Vodiš kratak intervju sa jednim korisnikom, na srpskom jeziku (latinica), persiraš ga („vi“).
+  return `You are an AI user experience researcher for Folio, a PDF tool. You are running a short interview with one user, in English. Be polite, warm and professional.
 
-## Cilj istraživanja
-Korisnik pripada grupi „${seg.name}“ (${seg.why}).
-Istraživačko pitanje za ovu grupu: ${seg.researchQuestion}
-Želimo da razumemo ZAŠTO se korisnik ponaša ovako, njegovim rečima.
+## Research goal
+The user belongs to the group "${seg.name}" (${seg.why}).
+Research question for this group: ${seg.researchQuestion}
+We want to understand WHY the user behaves this way, in their own words.
 
-## Činjenice o korisniku
-Ove činjenice je izračunao kod iz stvarnih događaja u alatu (poslednjih 30 dana). Pouzdane su.
+## Facts about the user
+These facts were computed by code from real events in the tool (last 30 days). They are reliable.
 ${facts}
 
-## Pravila o činjenicama
-- O tome šta je korisnik radio govoriš ISKLJUČIVO na osnovu gornjih činjenica. Ne izmišljaj alate, brojeve, dokumente ni datume koji tu ne piše.
-- Ne pominji ID-jeve činjenica korisniku; govori prirodno („Danas ste potpisali nalaz...“).
-- Ako korisnik kaže nešto što se ne slaže sa činjenicama, ne raspravljaj se: zahvali i pitaj ga da objasni svojim rečima.
-- Ne pominji grupu ni kako je korisnik razvrstan.
+## Rules about facts
+- When you talk about what the user did, rely ONLY on the facts above. Do not invent tools, numbers, documents or dates that are not listed.
+- Never mention fact IDs to the user; speak naturally ("Today you signed a lab report...").
+- If the user says something that contradicts the facts, do not argue: thank them and ask them to explain in their own words.
+- Do not mention the group or how the user was classified.
 
-## Pravila intervjua
-- Prvu poruku (predstavljanje i pristanak) već si poslao. Ako korisnik ne pristane, ljubazno zahvali i završi.
-- Postavljaj jedno pitanje po poruci. Poruke su kratke: 1 do 3 rečenice.
-- Prvo pitanje poveži sa konkretnom činjenicom, najbolje sa nečim što je uradio danas ili nečim što nikad ne koristi, a vezano je za istraživačko pitanje.
-- Pitanja su otvorena i nisu sugestivna: ne nudi razlog umesto korisnika („Da li je to zato što...?“ nije dozvoljeno).
-- Kad je odgovor nejasan ili kratak, postavi jedno dodatno pitanje („Možete li da opišete poslednji put kad...?“).
-- Najviše ${MAX_QUESTIONS} pitanja ukupno. Kad dobiješ glavni razlog i bar jedan konkretan primer, ili kad potrošiš pitanja, završi.
-- Kraj: zahvali, u jednoj rečenici ponovi šta si razumeo kao glavni razlog, i završi poruku tačno oznakom ${END}.`;
+## Interview rules
+- You have already sent the first message (introduction and consent). If the user does not agree, thank them kindly and end.
+- Ask one question per message. Keep messages short: 1 to 3 sentences.
+- Tie the first question to a specific fact, ideally something they did today or something they never use, related to the research question.
+- Questions are open and not leading: never offer a reason on the user's behalf ("Is that because...?" is not allowed).
+- When an answer is vague or short, ask one follow-up question ("Could you describe the last time you...?").
+- At most ${MAX_QUESTIONS} questions in total. Once you have the main reason and at least one concrete example, or you run out of questions, end.
+- Ending: thank the user, restate in one sentence what you understood as the main reason, and end the message with exactly the marker ${END}.`;
 }
 
-/** Istorija za API: početni korisnički potez + fiksni pozdrav + razgovor. */
+/** History for the API: opening user turn + fixed greeting + conversation. */
 function apiMessages(history: ChatMessage[]): Turn[] {
   return [
     { role: "user", content: OPENING_USER_TURN },
@@ -62,7 +64,7 @@ function apiMessages(history: ChatMessage[]): Turn[] {
   ];
 }
 
-/** Koliko je pitanja AI postavio posle pozdrava. */
+/** How many questions the AI has asked after the greeting. */
 export function questionsAsked(history: ChatMessage[]) {
   return history.filter((m) => m.role === "assistant").length;
 }
@@ -70,63 +72,63 @@ export function questionsAsked(history: ChatMessage[]) {
 export type Reply = { reply: string; done: boolean };
 
 /**
- * Sledeća poruka intervjuera. `history` počinje prvim odgovorom korisnika na pozdrav
- * (pozdrav sam nije u istoriji) i završava se porukom korisnika.
+ * The interviewer's next message. `history` starts with the user's first answer to the greeting
+ * (the greeting itself is not in the history) and ends with a user message.
  */
 export async function nextReply(profile: Profile, history: ChatMessage[]): Promise<Reply> {
   const asked = questionsAsked(history);
   const messages = apiMessages(history);
   if (asked >= MAX_QUESTIONS) {
-    // Instrukcija operatera usred razgovora: ne menja system prompt, pa keš ostaje.
-    messages.push({ role: "system", content: `Postavio si ${asked} pitanja. Sada završi intervju po pravilu za kraj, bez novih pitanja.` });
+    // Operator instruction mid-conversation: the system prompt stays the same, so the cache still hits.
+    messages.push({ role: "system", content: `You have asked ${asked} questions. Now end the interview following the ending rule, without new questions.` });
   }
   let text: string;
   try {
-    // Chat: niska latencija je važnija od dubokog razmišljanja.
+    // Chat: low latency matters more than deep reasoning.
     text = await complete({ instructions: systemPrompt(profile), turns: messages, maxTokens: 4000, effort: "low" });
   } catch (e) {
-    if (e instanceof RefusalError) return { reply: "Izvinite, ne mogu da nastavim ovaj razgovor. Hvala vam na vremenu!", done: true };
+    if (e instanceof RefusalError) return { reply: "Sorry, I can't continue this conversation. Thank you for your time!", done: true };
     throw e;
   }
   const done = text.includes(END) || asked >= MAX_QUESTIONS;
   return { reply: text.replace(END, "").trim(), done };
 }
 
-// ---- strukturisan rezultat ----
+// ---- structured result ----
 
 const ResultSchema = z.object({
-  summary: z.string().describe("Sažetak intervjua u 2–3 rečenice."),
-  main_reason: z.string().describe("Glavni razlog ponašanja, kratko (do 10 reči), rečima pogodnim za kohortu."),
-  reasons: z.array(z.string()).describe("Svi razlozi koje je korisnik naveo, kratko."),
-  quotes: z.array(z.string()).describe("Doslovni citati korisnika iz razgovora (1–3)."),
+  summary: z.string().describe("Summary of the interview in 2–3 sentences."),
+  main_reason: z.string().describe("The main reason for the behavior, short (up to 10 words), worded so it works as a cohort."),
+  reasons: z.array(z.string()).describe("Every reason the user mentioned, briefly."),
+  quotes: z.array(z.string()).describe("Verbatim quotes from the user in the conversation (1–3)."),
   sentiment: z.enum(["neg", "neu", "pos"]),
-  suggested_change: z.string().describe("Jedna konkretna promena proizvoda koja proizlazi iz odgovora."),
-  facts_used: z.array(z.string()).describe("ID-jevi činjenica (npr. f2) na koje se intervjuer zaista pozvao u pitanjima."),
+  suggested_change: z.string().describe("One concrete product change that follows from the answers."),
+  facts_used: z.array(z.string()).describe("IDs of facts (e.g. f2) that the interviewer actually referred to in questions."),
 });
 
 export async function summarize(profile: Profile, history: ChatMessage[], simulated = false): Promise<InterviewResult> {
-  const transcript = [`AI: ${CONSENT_MESSAGE}`, ...history.map((m) => `${m.role === "assistant" ? "AI" : "Korisnik"}: ${m.content}`)].join("\n\n");
+  const transcript = [`AI: ${CONSENT_MESSAGE}`, ...history.map((m) => `${m.role === "assistant" ? "AI" : "User"}: ${m.content}`)].join("\n\n");
   const facts = profile.facts.map((f) => `- [${f.id}] ${f.text}`).join("\n");
   const seg = segmentOf(profile);
   const out = await complete({
-    instructions: "Ti si analitičar korisničkih intervjua. Vraćaš isključivo JSON po zadatoj šemi.",
+    instructions: "You are an analyst of user interviews. You return only JSON that follows the given schema.",
     maxTokens: 8000,
     effort: "medium",
     schema: ResultSchema,
     schemaName: "interview_result",
     turns: [{
       role: "user",
-      content: `Analiziraj intervju sa korisnikom PDF alata Folio. Piši na srpskom (latinica).
+      content: `Analyze the interview with a user of the Folio PDF tool. Write in English.
 
-Istraživačko pitanje grupe „${seg.name}“: ${seg.researchQuestion}
+Research question for the group "${seg.name}": ${seg.researchQuestion}
 
-Činjenice o korisniku (izračunate iz događaja):
+Facts about the user (computed from events):
 ${facts}
 
-Transkript:
+Transcript:
 ${transcript}
 
-Pravila: razloge i citate uzimaj samo iz onoga što je korisnik zaista rekao; citati su doslovni. Ako korisnik nije pristao ili nije dao razlog, main_reason je „nije naveden razlog“. U facts_used stavi samo ID-jeve iz liste činjenica koje je AI zaista pomenuo.`,
+Rules: take reasons and quotes only from what the user actually said; quotes are verbatim. If the user did not agree or gave no reason, main_reason is "${NO_REASON}". In facts_used, include only IDs from the fact list that the AI actually mentioned.`,
     }],
   });
   const validIds = new Set(profile.facts.map((f) => f.id));
@@ -138,7 +140,7 @@ Pravila: razloge i citate uzimaj samo iz onoga što je korisnik zaista rekao; ci
     quotes: out.quotes,
     sentiment: out.sentiment,
     suggestedChange: out.suggested_change,
-    // Zaštita: zadržavamo samo ID-jeve koji stvarno postoje.
+    // Safeguard: keep only IDs that actually exist.
     factsUsed: out.facts_used.filter((id) => validIds.has(id)),
     simulated,
   };

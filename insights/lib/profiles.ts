@@ -3,8 +3,8 @@ import { loadCache, posthogReadConfigured, refreshFromPosthog } from "./posthog"
 import type { Profile } from "./types";
 
 /**
- * Profil iz keša. Ako osobe nema (npr. nova osoba iz Folio-a sa --user) ili se traži sveže,
- * povuče ponovo iz PostHoga jednom.
+ * Profile from the cache. If the person is missing (e.g. a new person from Folio with --user) or fresh data is requested,
+ * pulls from PostHog again, once.
  */
 export async function getProfile(userId: string, opts: { refresh?: boolean } = {}): Promise<Profile | null> {
   let cache = loadCache();

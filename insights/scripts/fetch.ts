@@ -1,6 +1,6 @@
-// Povuče događaje iz PostHoga u keš i ispiše grupe.
+// Pulls events from PostHog into the cache and prints the groups.
 //   npm run fetch             -> PostHog -> data/cache.json
-//   npm run fetch -- --local  -> bez PostHoga, samo prikaz nad postojećim kešom / seed rezervom
+//   npm run fetch -- --local  -> no PostHog, just shows the groups over the existing cache / seed backup
 import { loadEnv } from "../lib/env";
 import { loadCache, refreshFromPosthog } from "../lib/posthog";
 import { buildSegments } from "../lib/segments";
@@ -11,7 +11,7 @@ async function main() {
   const local = process.argv.includes("--local");
   const t0 = Date.now();
   const cache = local ? loadCache() : await refreshFromPosthog();
-  console.log(`Izvor: ${cache.source} · ${cache.people.length} osoba · ${cache.usage.length} redova upotrebe · ${cache.today.length} redova za danas${local ? "" : ` · ${Date.now() - t0} ms`}`);
+  console.log(`Source: ${cache.source} · ${cache.people.length} people · ${cache.usage.length} usage rows · ${cache.today.length} rows for today${local ? "" : ` · ${Date.now() - t0} ms`}`);
   for (const s of buildSegments(cache)) {
     const roles = new Map<string, number>();
     for (const id of s.userIds) {

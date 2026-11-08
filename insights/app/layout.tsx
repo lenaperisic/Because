@@ -3,15 +3,15 @@ import Link from "next/link";
 import { Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 
-// Grotesk napravljen za novinsku kuću: priča iz podataka, ne „editorial“ serif. Varijabilan 400–900.
+// A grotesk made for a news publisher: a story told with data, not an "editorial" serif. Variable 400–900.
 const sans = Schibsted_Grotesk({ subsets: ["latin", "latin-ext"], display: "swap", variable: "--font-schibsted" });
 
 export const metadata = {
-  title: "Because · zašto korisnici rade to što rade",
-  description: "PostHog vam kaže šta korisnici rade. Because ih pita zašto, i to svakog o onome što je on uradio.",
+  title: "Because · why users do what they do",
+  description: "PostHog tells you what users do. Because asks them why, each one about what they actually did.",
 };
 
-/** Znak: matematički simbol ∵ („zato što“), tri tačke u obrnutom trouglu, bojom glasa korisnika. */
+/** Mark: the math symbol ∵ ("because"), three dots in an inverted triangle, in the color of the user's voice. */
 function BecauseMark() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="brand-mark">
@@ -24,10 +24,10 @@ function BecauseMark() {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="sr" className={sans.variable}>
+    <html lang="en" className={sans.variable}>
       <body>
         <header className="brandbar">
-          <Link href="/" className="brand" aria-label="Because, početna">
+          <Link href="/" className="brand" aria-label="Because, home">
             <BecauseMark />
             <span className="wordmark">because</span>
           </Link>

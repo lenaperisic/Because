@@ -3,7 +3,7 @@ import { refreshFromPosthog } from "@/lib/posthog";
 
 export const dynamic = "force-dynamic";
 
-/** Dugme „Osveži iz PostHoga“: povuče sve ponovo i prepiše keš. */
+/** The "Refresh from PostHog" button: pulls everything again and overwrites the cache. */
 export async function POST() {
   try {
     const c = await refreshFromPosthog();

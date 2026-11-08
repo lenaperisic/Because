@@ -13,9 +13,9 @@ export default function RefreshButton() {
     try {
       const res = await fetch("/api/refresh", { method: "POST" });
       const data = await res.json();
-      setMsg(data.ok ? `Povučeno: ${data.people} osoba` : `Greška: ${data.error}`);
+      setMsg(data.ok ? `Fetched: ${data.people} people` : `Error: ${data.error}`);
     } catch (e) {
-      setMsg(`Greška: ${e instanceof Error ? e.message : String(e)}`);
+      setMsg(`Error: ${e instanceof Error ? e.message : String(e)}`);
     }
     setBusy(false);
     router.refresh();
@@ -23,7 +23,7 @@ export default function RefreshButton() {
 
   return (
     <span>
-      <button className="secondary" onClick={refresh} disabled={busy}>{busy ? "Povlačim..." : "Osveži iz PostHoga"}</button>
+      <button className="secondary" onClick={refresh} disabled={busy}>{busy ? "Fetching..." : "Refresh from PostHog"}</button>
       {msg && <span className="muted" style={{ marginLeft: 8 }}>{msg}</span>}
     </span>
   );
