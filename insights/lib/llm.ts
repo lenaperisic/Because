@@ -33,6 +33,52 @@ export async function complete<T>(opts: Opts<T>): Promise<string | T> {
 
 // ---- Perplexity Agent API: POST /v1/agent ----
 
+// Hakaton nalog pušta 1 zahtev na ~3 s (x-ratelimit-limit: 1, x-ratelimit-reset = početak zahteva + ~3 s).
+// Zato u ovom procesu zahtevi idu jedan po jedan i čekaju reset, a 429/5xx i pad mreže se ponavljaju sa pauzom.
+const MAX_ATTEMPTS = 6;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+let queue: Promise<unknown> = Promise.resolve();
+let nextAllowedAt = 0;
+
+function oneAtATime<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => undefined);
+  return run;
+}
+
+function postAgent(body: unknown): Promise<Response> {
+  return oneAtATime(async () => {
+    for (let attempt = 1; ; attempt++) {
+      const wait = nextAllowedAt - Date.now();
+      if (wait > 0) await sleep(wait);
+      let res: Response;
+      try {
+        res = await fetch("https://api.perplexity.ai/v1/agent", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(90_000),
+        });
+      } catch (e) {
+        // Istek vremena se ne ponavlja (već je trajalo 90 s); pad mreže da.
+        const name = e instanceof Error ? e.name : "";
+        if (name === "TimeoutError" || name === "AbortError" || attempt >= MAX_ATTEMPTS) throw e;
+        console.warn(`Perplexity: ${e instanceof Error ? e.message : e}, pokušaj ${attempt}/${MAX_ATTEMPTS}`);
+        nextAllowedAt = Date.now() + 1000 * 2 ** (attempt - 1);
+        continue;
+      }
+      const reset = Number(res.headers.get("x-ratelimit-reset"));
+      if (reset > 0) nextAllowedAt = reset * 1000 + 1000;
+      if ((res.status !== 429 && res.status < 500) || attempt >= MAX_ATTEMPTS) return res;
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const pause = Math.max(Number.isFinite(retryAfter) ? retryAfter * 1000 : 0, 1000 * 2 ** (attempt - 1));
+      console.warn(`Perplexity ${res.status}, pokušaj ${attempt}/${MAX_ATTEMPTS}, čekam ${Math.round(pause / 1000)} s`);
+      await res.body?.cancel();
+      nextAllowedAt = Math.max(nextAllowedAt, Date.now() + pause);
+    }
+  });
+}
+
 async function viaPerplexity<T>(o: Opts<T>): Promise<string | T> {
   const body: Record<string, unknown> = {
     model: MODEL.includes("/") ? MODEL : `anthropic/${MODEL}`,
@@ -45,12 +91,7 @@ async function viaPerplexity<T>(o: Opts<T>): Promise<string | T> {
     const { $schema: _ignored, ...schema } = z.toJSONSchema(o.schema) as Record<string, unknown>;
     body.response_format = { type: "json_schema", json_schema: { name: o.schemaName ?? "rezultat", strict: true, schema } };
   }
-  const res = await fetch("https://api.perplexity.ai/v1/agent", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(90_000),
-  });
+  const res = await postAgent(body);
   const data = (await res.json().catch(() => ({}))) as {
     output?: { type: string; content?: { type: string; text?: string }[] }[];
     error?: { message?: string };
