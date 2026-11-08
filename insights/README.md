@@ -26,6 +26,7 @@ npm run fetch -- --local          # isto, nad postojećim kešom ili seed rezerv
 npm run facts -- seed_lekar_017   # činjenice sa ID-jevima i grupa za jednu osobu
 npm run simulate -- --per 8       # simulirani intervjui, 8 po grupi (simulated: true), upis u PostHog
 npm run simulate -- --per 1 --segment novi --no-posthog   # brza proba
+npm run synthesize                # sinteza razloga po grupi (Claude) -> data/synthesis/<grupa>.json
 npm run dev                       # http://localhost:3000
 ```
 
@@ -45,9 +46,12 @@ Bez PostHog ključeva aplikacija radi nad `data/seed-backup.json`.
 | `lib/llm.ts` | Jedan poziv modela: Perplexity `/v1/agent` (`anthropic/claude-opus-5-5`, `tool_choice: none` = bez web pretrage) ili Anthropic direktno |
 | `lib/store.ts` | Rezultati u `data/results/<userId>.json`, pa upis u PostHog |
 | `lib/capture.ts` | Upis nazad: događaj `ai_interview_completed` + `$set` (`ai_segment`, `ai_main_reason`, `ai_sentiment`, `ai_suggested_change`, `ai_interview_simulated`, `ai_interviewed_at`) |
+| `lib/synthesis.ts` | Sinteza razloga po grupi: jedan poziv modela grupiše intervjue u teme; broj osoba i citate proverava kod |
 | `scripts/simulate.ts` | Drugi Claude igra korisnika sa skrivenim razlogom; na kraju poredi pogođen razlog sa skrivenim |
+| `scripts/synthesize.ts` | Ispiše sintezu za sve grupe (`--segment <id>`, `--force`) |
+| `app/segment/[id]` | Ekran grupe: korisnici, status intervjua, razlozi sa citatima |
 | `app/interview/[userId]` | Chat ekran + činjenice sa strane |
-| `app/api/*` | `refresh`, `segments`, `profile/[userId]`, `interview`, `interview/finish` |
+| `app/api/*` | `refresh`, `segments`, `segments/[id]/synthesis`, `profile/[userId]`, `interview`, `interview/finish` |
 
 ### Pravila za grupe
 
@@ -73,6 +77,14 @@ Posle svakog intervjua (uživo i simuliranog) šalje se `ai_interview_completed`
 
 40 intervjua (`--per 8`) traje oko 8 minuta sa `--parallel 3` i troši oko 500 poziva modela. Pustite ih jednom posle seeda, a ne pred demo.
 
+### Sinteza razloga po grupi
+
+`GET /api/segments/<id>/synthesis` (ili `npm run synthesize`) vraća `{ segmentId, themes: [{ title, count, quotes, userIds }], takeaway, basedOn, simulatedCount }`.
+
+- Ulaz su intervjui osoba koje su sada u grupi (isto pravilo kao ekran grupe).
+- Model samo grupiše u 2–5 tema. `count` je broj osoba koji računa kod. Citat ostaje samo ako je doslovno iz `quotes` osobe iz te teme, inače se izbacuje.
+- Keš je u `data/synthesis/<id>.json`. Nova sinteza se pravi tek kad se rezultati grupe promene (nov ili ponovljen intervju), a `?force=1` preskače keš. Grupa bez intervjua ne zove model.
+
 ## Sledeće (faza 2)
 
-Dashboard (grupe, grupa, korisnik, osvežavanje uživo), sinteza razloga po grupi sa citatima, Claude imenuje grupe, AI anketa.
+Sinteza na ekranu grupe, osvežavanje uživo, Claude imenuje grupe, AI anketa.
