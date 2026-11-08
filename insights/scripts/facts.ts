@@ -4,7 +4,7 @@
 import { loadEnv } from "../lib/env";
 import { buildProfile, getStats } from "../lib/facts";
 import { loadCache, refreshFromPosthog } from "../lib/posthog";
-import { classify, SEGMENT_DEFS } from "../lib/segments";
+import { classify, segmentDef } from "../lib/segments";
 
 loadEnv();
 
@@ -15,7 +15,7 @@ async function main() {
   const profile = buildProfile(cache, userId);
   if (!profile) throw new Error(`No person ${userId} in the cache (${cache.source}, ${cache.people.length} people).`);
   const why = classify(getStats(cache, userId)!).why;
-  console.log(`${profile.userId} · ${profile.role} · group: ${SEGMENT_DEFS[profile.segmentId as keyof typeof SEGMENT_DEFS].name} (${why})`);
+  console.log(`${profile.userId} · ${profile.role} · group: ${segmentDef(profile.segmentId).name} (${why})`);
   console.log(JSON.stringify(profile.facts, null, 2));
 }
 

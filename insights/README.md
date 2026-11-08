@@ -28,6 +28,7 @@ npm run facts -- sample_doctor_017    # facts with IDs and the group for one per
 npm run simulate -- --per 8           # simulated interviews, 8 per group (simulated: true), written to PostHog
 npm run simulate -- --per 1 --segment new --no-posthog   # quick test
 npm run synthesize                    # reason synthesis per group (Claude) -> data/synthesis/<group>.json
+npm run name-segments                 # Claude names the groups and phrases their research questions -> data/segment-names.json (also a button on the home page)
 npm run dev                           # http://localhost:3000
 ```
 

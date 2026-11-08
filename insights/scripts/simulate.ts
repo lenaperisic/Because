@@ -14,7 +14,7 @@ loadEnv();
 const { buildProfile } = await import("../lib/facts");
 const { loadCache } = await import("../lib/posthog");
 const { isSample } = await import("../lib/sample");
-const { buildSegments, SEGMENT_DEFS } = await import("../lib/segments");
+const { buildSegments, segmentDef } = await import("../lib/segments");
 const { CONSENT_MESSAGE, nextReply, summarize, MAX_QUESTIONS } = await import("../lib/interview");
 const { complete, provider } = await import("../lib/llm");
 const { loadInterview, saveInterview } = await import("../lib/store");
@@ -130,7 +130,7 @@ async function main() {
   const queue = [...jobs];
   async function worker() {
     for (let job = queue.shift(); job; job = queue.shift()) {
-      const name = `${job.profile.userId} (${SEGMENT_DEFS[job.profile.segmentId as SegmentId].name})`;
+      const name = `${job.profile.userId} (${segmentDef(job.profile.segmentId).name})`;
       const t = Date.now();
       try {
         const { result, record, turns } = await runOne(job.profile, job.hidden);

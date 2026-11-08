@@ -14,6 +14,7 @@ export default function Chat({ userId, consent, previous }: Props) {
   const [result, setResult] = useState<InterviewResult | null>(null);
   const [inPosthog, setInPosthog] = useState<boolean>(!!previous?.posthogSentAt);
   const [error, setError] = useState("");
+  const [declined, setDeclined] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
 
   // Body in braces: scrollIntoView returns a Promise in newer Chromium, and React would call it as a cleanup and crash.
@@ -35,6 +36,7 @@ export default function Chat({ userId, consent, previous }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      if (data.declined) return setDeclined(true);
       setInPosthog(res.headers.get("X-Posthog") === "sent");
       setResult(data as InterviewResult);
     } catch (e) {
@@ -74,6 +76,7 @@ export default function Chat({ userId, consent, previous }: Props) {
         <div ref={bottom} />
       </div>
       {error && <p className="error">{error}</p>}
+      {declined && <p className="muted">The conversation was not saved and nothing was sent to the team.</p>}
       {!done && (
         <div className="composer">
           <textarea
@@ -104,7 +107,7 @@ function ResultView({ result, earlier, inPosthog }: { result: InterviewResult; e
         <dt>Summary</dt><dd>{result.summary}</dd>
         {result.reasons.length > 0 && <><dt>Reasons</dt><dd>{result.reasons.join(" · ")}</dd></>}
         {result.quotes.length > 0 && <><dt>Quotes</dt><dd>{result.quotes.map((q) => `“${q}”`).join(" ")}</dd></>}
-        <dt>Suggested change</dt><dd>{result.suggestedChange}</dd>
+        {result.suggestedChange && <><dt>Suggested change</dt><dd>{result.suggestedChange}</dd></>}
         <dt>Tone</dt><dd>{SENTIMENT[result.sentiment]}</dd>
         <dt>Facts used</dt><dd>{result.factsUsed.join(", ") || "none"}</dd>
       </dl>

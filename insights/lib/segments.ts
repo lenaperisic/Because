@@ -1,8 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { daysAgo, getStats, listUserIds, triedAndQuit, type UserStats } from "./facts";
 import type { EventCache, Segment } from "./types";
 
 // Sorting into 5 groups by BEHAVIOR (not by role, no demographics). Code builds the groups;
-// Claude later (phase 2) only names them and phrases the research question.
+// Claude only names them and phrases the research question (lib/naming.ts -> data/segment-names.json).
 
 export type SegmentId = "signers" | "readers" | "compliance" | "tried_ai" | "new";
 
@@ -41,6 +43,26 @@ export const SEGMENT_DEFS: Record<SegmentId, Omit<Segment, "userIds">> = {
 
 export const SEGMENT_ORDER: SegmentId[] = ["signers", "readers", "compliance", "tried_ai", "new"];
 
+export const NAMES_FILE = path.join(process.cwd(), "data", "segment-names.json");
+export type SegmentNames = Partial<Record<SegmentId, { name: string; researchQuestion: string }>>;
+
+function loadNames(): SegmentNames {
+  try {
+    return JSON.parse(fs.readFileSync(NAMES_FILE, "utf8")) as SegmentNames;
+  } catch {
+    return {};
+  }
+}
+
+export const isSegmentId = (id: string): id is SegmentId => id in SEGMENT_DEFS;
+
+/** Group definition: the rule from code + the name and question Claude gave (if any). */
+export function segmentDef(id: string): Omit<Segment, "userIds"> {
+  const base = SEGMENT_DEFS[isSegmentId(id) ? id : "new"];
+  const named = loadNames()[base.id as SegmentId];
+  return named ? { ...base, name: named.name, researchQuestion: named.researchQuestion } : base;
+}
+
 const n = (s: UserStats, f: string) => s.counts[f]?.n ?? 0;
 
 /**
@@ -76,5 +98,5 @@ export function buildSegments(cache: EventCache, now = Date.now()): Segment[] {
     const s = getStats(cache, userId, now);
     if (s) byId.get(classify(s, now).segmentId)!.push(userId);
   }
-  return SEGMENT_ORDER.map((id) => ({ ...SEGMENT_DEFS[id], userIds: byId.get(id)! }));
+  return SEGMENT_ORDER.map((id) => ({ ...segmentDef(id), userIds: byId.get(id)! }));
 }

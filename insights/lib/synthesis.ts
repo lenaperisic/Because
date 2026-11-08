@@ -5,7 +5,7 @@ import { z } from "zod";
 import { NO_REASON } from "./interview";
 import { complete } from "./llm";
 import { loadCache, writeJson } from "./posthog";
-import { buildSegments, SEGMENT_DEFS, type SegmentId } from "./segments";
+import { buildSegments, segmentDef, type SegmentId } from "./segments";
 import { listInterviews } from "./store";
 import type { InterviewRecord } from "./types";
 
@@ -52,7 +52,8 @@ function signatureOf(records: InterviewRecord[]) {
 
 const normalize = (s: string) => s.trim().replace(/\s+/g, " ");
 
-function loadCached(segmentId: string): Synthesis | null {
+/** Saved synthesis (no model call); null if there is none. */
+export function loadSynthesis(segmentId: string): Synthesis | null {
   const f = path.join(SYNTHESIS_DIR, `${segmentId}.json`);
   try {
     return fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf8")) as Synthesis) : null;
@@ -65,7 +66,7 @@ function loadCached(segmentId: string): Synthesis | null {
 export async function synthesizeSegment(segmentId: SegmentId, opts: { force?: boolean } = {}): Promise<Synthesis> {
   const records = segmentRecords(segmentId);
   const signature = signatureOf(records);
-  const cached = loadCached(segmentId);
+  const cached = loadSynthesis(segmentId);
   if (!opts.force && cached?.signature === signature) return cached;
 
   const base = {
@@ -78,7 +79,7 @@ export async function synthesizeSegment(segmentId: SegmentId, opts: { force?: bo
   // With no interviews there is nothing to synthesize; we don't call the model or cache.
   if (records.length === 0) return { ...base, themes: [], takeaway: "" };
 
-  const seg = SEGMENT_DEFS[segmentId];
+  const seg = segmentDef(segmentId);
   const interviews = records.map((r) => ({
     id: r.result.userId,
     simulated: r.result.simulated,

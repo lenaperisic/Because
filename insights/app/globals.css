@@ -126,3 +126,25 @@ ul.reasons > li:last-child { border-bottom: 0; padding-bottom: 0; }
   .pill.live::before { animation: none; }
   button { transition: none; }
 }
+
+
+/* Home as a dashboard (from task-2), in the redesign colors */
+header.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px 24px; flex-wrap: wrap; }
+header.top > div:first-child { flex: 1 1 520px; }
+.actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.live-toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 0.9375rem; color: var(--ink-soft); }
+.live-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--voice); animation: live-pulse 1.8s var(--ease-out) infinite; }
+.live-strip { margin-top: 24px; border-color: color-mix(in oklch, var(--voice) 45%, transparent); }
+a.card.segment { color: inherit; display: block; text-decoration: none; transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out); }
+a.card.segment:hover { border-color: var(--primary); box-shadow: 0 4px 18px color-mix(in oklch, var(--primary) 12%, transparent); }
+.question { font-weight: 650; margin: 6px 0 10px; }
+.insight { background: var(--primary-wash); border-radius: 12px; padding: 10px 14px; margin: 10px 0 0; }
+.bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 4px 0 10px; background: var(--line); }
+.bar span { background: var(--ink-soft); }
+.bar .role-doctor { background: oklch(0.55 0.13 250); }
+.bar .role-developer { background: oklch(0.55 0.15 300); }
+.bar .role-banker { background: oklch(0.58 0.12 160); }
+.bar .role-lawyer { background: oklch(0.68 0.14 65); }
+.bar .role-student { background: oklch(0.6 0.17 350); }
+@media (prefers-reduced-motion: reduce) { .live-toggle .dot { animation: none; } }

@@ -1,7 +1,5 @@
 # Plan: AI intervjui na PostHog podacima (20h)
 
-Nov 7, 2026 · @Novak
-
 **Pravimo alat koji se kači na PostHog, razvrstava korisnike u grupe po tome kako koriste proizvod i sa svakim vodi AI intervju zasnovan na onome što je zaista radio.** Rezultat se vraća nazad u PostHog, pa produkt tim vidi i šta korisnici rade i zašto.
 
 **Rečenica za pitch:** „PostHog vam kaže šta korisnici rade. Mi ih pitamo zašto, i to svakog o onome što je on uradio.“

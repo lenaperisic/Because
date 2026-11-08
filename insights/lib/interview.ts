@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { complete, RefusalError, type Turn } from "./llm";
-import { SEGMENT_DEFS, type SegmentId } from "./segments";
+import { segmentDef } from "./segments";
 import type { ChatMessage, InterviewResult, Profile } from "./types";
 
 // The only part where the AI decides. All facts about the user are computed before this (lib/facts.ts),
@@ -22,7 +22,7 @@ export const CONSENT_MESSAGE =
 const OPENING_USER_TURN = "(The user opened the interview page.)";
 
 function segmentOf(profile: Profile) {
-  return SEGMENT_DEFS[profile.segmentId as SegmentId] ?? SEGMENT_DEFS.new;
+  return segmentDef(profile.segmentId);
 }
 
 export function systemPrompt(profile: Profile): string {
@@ -51,7 +51,9 @@ ${facts}
 - Tie the first question to a specific fact, ideally something they did today or something they never use, related to the research question.
 - Questions are open and not leading: never offer a reason on the user's behalf ("Is that because...?" is not allowed).
 - When an answer is vague or short, ask one follow-up question ("Could you describe the last time you...?").
-- At most ${MAX_QUESTIONS} questions in total. Once you have the main reason and at least one concrete example, or you run out of questions, end.
+- At most ${MAX_QUESTIONS} questions in total. Do not end before the 4th question, unless the user refuses the conversation or clearly does not want to continue.
+- Don't settle for the first reason you hear. If the user hints at something in passing, ask more about it, openly.
+- Before ending, always ask one open question, for example: "Is there anything else that affects how you use Folio?" Once they answer it, or you run out of questions, end.
 - Ending: thank the user, restate in one sentence what you understood as the main reason, and end the message with exactly the marker ${END}.`;
 }
 
@@ -96,13 +98,19 @@ export async function nextReply(profile: Profile, history: ChatMessage[]): Promi
 
 // ---- structured result ----
 
+/** The user did not agree to the conversation (or withdrew consent): the result is not saved or sent. */
+export class ConsentDeclinedError extends Error {}
+
+const MIN_QUOTE_WORDS = 3;
+
 const ResultSchema = z.object({
+  consented: z.boolean().describe("false if the user refused the conversation or explicitly withdrew consent; otherwise true."),
   summary: z.string().describe("Summary of the interview in 2–3 sentences."),
   main_reason: z.string().describe("The main reason for the behavior, short (up to 10 words), worded so it works as a cohort."),
   reasons: z.array(z.string()).describe("Every reason the user mentioned, briefly."),
-  quotes: z.array(z.string()).describe("Verbatim quotes from the user in the conversation (1–3)."),
+  quotes: z.array(z.string()).describe("Up to 3 verbatim quotes from the user that contain a reason, an experience or a concrete example. An empty list if there are none."),
   sentiment: z.enum(["neg", "neu", "pos"]),
-  suggested_change: z.string().describe("One concrete product change that follows from the answers."),
+  suggested_change: z.string().describe("One concrete product change that follows from the reasons the user gave. Empty text if no reason was given."),
   facts_used: z.array(z.string()).describe("IDs of facts (e.g. f2) that the interviewer actually referred to in questions."),
 });
 
@@ -128,18 +136,22 @@ ${facts}
 Transcript:
 ${transcript}
 
-Rules: take reasons and quotes only from what the user actually said; quotes are verbatim. If the user did not agree or gave no reason, main_reason is "${NO_REASON}". In facts_used, include only IDs from the fact list that the AI actually mentioned.`,
+Rules: take reasons and quotes only from what the user actually said; quotes are verbatim. Do not quote consent, refusals, answers without content ("I don't know."), the user's questions to the interviewer, or attempts to change the interviewer's behavior. If the user did not agree or gave no reason, main_reason is "${NO_REASON}" and suggested_change is empty; do not derive a suggestion from the user's questions. In facts_used, include only IDs from the fact list that the AI actually mentioned.`,
     }],
   });
+  if (!out.consented) throw new ConsentDeclinedError();
+  const noReason = out.main_reason.trim().toLowerCase().includes(NO_REASON);
   const validIds = new Set(profile.facts.map((f) => f.id));
   return {
     userId: profile.userId,
     summary: out.summary,
     mainReason: out.main_reason,
     reasons: out.reasons,
-    quotes: out.quotes,
+    // Safeguard: one- or two-word answers ("Yes.", "I don't know.") are not quotes.
+    quotes: out.quotes.filter((q) => q.trim().split(/\s+/).length >= MIN_QUOTE_WORDS),
     sentiment: out.sentiment,
-    suggestedChange: out.suggested_change,
+    // Safeguard: no reason, no suggested change.
+    suggestedChange: noReason ? "" : out.suggested_change,
     // Safeguard: keep only IDs that actually exist.
     factsUsed: out.facts_used.filter((id) => validIds.has(id)),
     simulated,
