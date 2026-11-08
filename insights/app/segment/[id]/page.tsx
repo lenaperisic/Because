@@ -103,7 +103,7 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
     <main>
       <p className="muted"><Link href="/">← Grupe</Link></p>
       <h1>{segment.name} <span className="pill">{personCount(segment.userIds.length)}</span></h1>
-      <p><b>Istraživačko pitanje:</b> {segment.researchQuestion}</p>
+      <p className="lede">{segment.researchQuestion}</p>
       <p className="muted">{segment.why}</p>
       <p>
         Intervjuisano <b>{done.length} od {segment.userIds.length}</b>
@@ -130,12 +130,12 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
                       <tr key={userId}>
                         <td>
                           <Link href={interviewHref(userId)}>{userId}</Link>
-                          {!isSeed(userId) && <> <span className="pill">uživo</span></>}
+                          {!isSeed(userId) && <> <span className="pill live">uživo</span></>}
                         </td>
                         <td>{person?.name || "—"}</td>
                         <td>{person?.role || "—"}</td>
                         <td className="nowrap">
-                          {r ? <>✓{r.simulated && <> <span className="pill">simulirano</span></>}</> : <span className="muted">—</span>}
+                          {r ? <>✓{r.simulated && <> <span className="pill sim">simulirano</span></>}</> : <span className="muted">—</span>}
                         </td>
                         <td>{r?.mainReason}</td>
                         <td>{r && (SENTIMENT[r.sentiment] ?? r.sentiment)}</td>
@@ -159,12 +159,12 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
                   <li key={g.key}>
                     <b>{g.label}</b> <span className="pill">{personCount(g.count)}</span>
                     {g.simulated > 0 && (
-                      <> <span className="pill">{g.simulated === g.count ? "simulirano" : `simulirano: ${g.simulated}`}</span></>
+                      <> <span className="pill sim">{g.simulated === g.count ? "simulirano" : `simulirano: ${g.simulated}`}</span></>
                     )}
                     {g.quotes.map((q) => (
                       <blockquote key={`${q.userId}|${q.text}`} className="quote">
-                        „{q.text}“ <span className="muted">— <Link href={interviewHref(q.userId)}>{q.userId}</Link></span>
-                        {q.simulated && <> <span className="pill">simulirano</span></>}
+                        <span className="qm" aria-hidden="true">„</span>{q.text}“ <span className="muted">— <Link href={interviewHref(q.userId)}>{q.userId}</Link></span>
+                        {q.simulated && <> <span className="pill sim">simulirano</span></>}
                       </blockquote>
                     ))}
                   </li>
