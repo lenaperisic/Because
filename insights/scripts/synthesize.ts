@@ -5,7 +5,7 @@
 import { loadEnv } from "../lib/env";
 loadEnv();
 
-const { SEGMENT_DEFS, SEGMENT_ORDER } = await import("../lib/segments");
+const { segmentDef, SEGMENT_ORDER } = await import("../lib/segments");
 const { synthesizeSegment } = await import("../lib/synthesis");
 const { provider } = await import("../lib/llm");
 
@@ -24,7 +24,7 @@ async function main() {
   const results = await Promise.allSettled(ids.map((id) => synthesizeSegment(id, { force: FORCE })));
   let failed = 0;
   results.forEach((r, i) => {
-    const name = SEGMENT_DEFS[ids[i]].name;
+    const name = segmentDef(ids[i]).name;
     if (r.status === "rejected") {
       failed++;
       console.error(`\n✗ ${name}: ${r.reason instanceof Error ? r.reason.message : r.reason}`);

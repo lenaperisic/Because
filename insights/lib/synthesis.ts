@@ -4,7 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 import { complete } from "./llm";
 import { loadCache, writeJson } from "./posthog";
-import { buildSegments, SEGMENT_DEFS, type SegmentId } from "./segments";
+import { buildSegments, segmentDef, type SegmentId } from "./segments";
 import { listInterviews } from "./store";
 import type { InterviewRecord } from "./types";
 
@@ -51,7 +51,8 @@ function signatureOf(records: InterviewRecord[]) {
 
 const normalize = (s: string) => s.trim().replace(/\s+/g, " ");
 
-function loadCached(segmentId: string): Synthesis | null {
+/** Sačuvana sinteza (bez poziva modela); null ako je nema. */
+export function loadSynthesis(segmentId: string): Synthesis | null {
   const f = path.join(SYNTHESIS_DIR, `${segmentId}.json`);
   try {
     return fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf8")) as Synthesis) : null;
@@ -64,7 +65,7 @@ function loadCached(segmentId: string): Synthesis | null {
 export async function synthesizeSegment(segmentId: SegmentId, opts: { force?: boolean } = {}): Promise<Synthesis> {
   const records = segmentRecords(segmentId);
   const signature = signatureOf(records);
-  const cached = loadCached(segmentId);
+  const cached = loadSynthesis(segmentId);
   if (!opts.force && cached?.signature === signature) return cached;
 
   const base = {
@@ -77,7 +78,7 @@ export async function synthesizeSegment(segmentId: SegmentId, opts: { force?: bo
   // Bez intervjua nema šta da se sintetiše; ne zovemo model i ne keširamo.
   if (records.length === 0) return { ...base, themes: [], takeaway: "" };
 
-  const seg = SEGMENT_DEFS[segmentId];
+  const seg = segmentDef(segmentId);
   const interviews = records.map((r) => ({
     id: r.result.userId,
     simulated: r.result.simulated,

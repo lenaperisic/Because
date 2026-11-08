@@ -1,8 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
 import { daysAgo, getStats, listUserIds, triedAndQuit, type UserStats } from "./facts";
 import type { EventCache, Segment } from "./types";
 
 // Razvrstavanje u 5 grupa po PONAŠANJU (ne po ulozi, bez demografije). Grupe pravi kod;
-// Claude kasnije (faza 2) samo daje ime i formuliše istraživačko pitanje.
+// Claude samo daje ime i formuliše istraživačko pitanje (lib/naming.ts -> data/segment-names.json).
 
 export type SegmentId = "potpisivaci" | "citaci" | "uskladjenost" | "probali_ai" | "novi";
 
@@ -41,6 +43,26 @@ export const SEGMENT_DEFS: Record<SegmentId, Omit<Segment, "userIds">> = {
 
 export const SEGMENT_ORDER: SegmentId[] = ["potpisivaci", "citaci", "uskladjenost", "probali_ai", "novi"];
 
+export const NAMES_FILE = path.join(process.cwd(), "data", "segment-names.json");
+export type SegmentNames = Partial<Record<SegmentId, { name: string; researchQuestion: string }>>;
+
+function loadNames(): SegmentNames {
+  try {
+    return JSON.parse(fs.readFileSync(NAMES_FILE, "utf8")) as SegmentNames;
+  } catch {
+    return {};
+  }
+}
+
+export const isSegmentId = (id: string): id is SegmentId => id in SEGMENT_DEFS;
+
+/** Definicija grupe: pravilo iz koda + ime i pitanje koje je dao Claude (ako postoje). */
+export function segmentDef(id: string): Omit<Segment, "userIds"> {
+  const base = SEGMENT_DEFS[isSegmentId(id) ? id : "novi"];
+  const named = loadNames()[base.id as SegmentId];
+  return named ? { ...base, name: named.name, researchQuestion: named.researchQuestion } : base;
+}
+
 const n = (s: UserStats, f: string) => s.counts[f]?.n ?? 0;
 
 /**
@@ -76,5 +98,5 @@ export function buildSegments(cache: EventCache, now = Date.now()): Segment[] {
     const s = getStats(cache, userId, now);
     if (s) byId.get(classify(s, now).segmentId)!.push(userId);
   }
-  return SEGMENT_ORDER.map((id) => ({ ...SEGMENT_DEFS[id], userIds: byId.get(id)! }));
+  return SEGMENT_ORDER.map((id) => ({ ...segmentDef(id), userIds: byId.get(id)! }));
 }

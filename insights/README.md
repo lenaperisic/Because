@@ -27,6 +27,7 @@ npm run facts -- seed_lekar_017   # činjenice sa ID-jevima i grupa za jednu oso
 npm run simulate -- --per 8       # simulirani intervjui, 8 po grupi (simulated: true), upis u PostHog
 npm run simulate -- --per 1 --segment novi --no-posthog   # brza proba
 npm run synthesize                # sinteza razloga po grupi (Claude) -> data/synthesis/<grupa>.json
+npm run name-segments             # Claude daje ime i istraživačko pitanje grupama -> data/segment-names.json (i dugme na početnoj)
 npm run dev                       # http://localhost:3000
 ```
 

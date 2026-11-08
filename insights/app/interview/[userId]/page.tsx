@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CONSENT_MESSAGE } from "@/lib/interview";
 import { getProfile } from "@/lib/profiles";
-import { SEGMENT_DEFS, type SegmentId } from "@/lib/segments";
+import { segmentDef } from "@/lib/segments";
 import { loadInterview } from "@/lib/store";
 import Chat from "./Chat";
 
@@ -20,14 +20,14 @@ export default async function InterviewPage({ params }: { params: Promise<{ user
       </main>
     );
   }
-  const seg = SEGMENT_DEFS[profile.segmentId as SegmentId];
+  const seg = segmentDef(profile.segmentId);
   const previous = loadInterview(userId);
 
   return (
     <main>
-      <p className="muted"><Link href="/">← Grupe</Link></p>
+      <p className="muted"><Link href="/">← Grupe</Link> · <Link href={`/segment/${seg.id}`}>{seg.name}</Link></p>
       <h1>Intervju · {userId}</h1>
-      <p className="muted">{profile.role} · grupa <b>{seg.name}</b> · {seg.researchQuestion}</p>
+      <p className="muted">{profile.role} · grupa <Link href={`/segment/${seg.id}`}><b>{seg.name}</b></Link> · {seg.researchQuestion}</p>
       <div className="split">
         <section className="card">
           <Chat userId={userId} consent={CONSENT_MESSAGE} previous={previous} />
