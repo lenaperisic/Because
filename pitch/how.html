@@ -13,7 +13,7 @@
     1: istraživač koji intervjuiše svakog korisnika. 2: PostHog. 3: grupe po ponašanju (prave brojke iz seed-a).
     4: intervju (prava rečenica iz simulacije). 5: odgovor nazad u PostHog (ai_main_reason).
     Napred: →, Space, PageDown, Enter, klik. Nazad: ←, PageUp. 1–5: skok. ?beat=3, ?static=1 (za PNG).
-    Sa prvog koraka ← vodi na „Dve opcije“ (korak 3).
+    Sa prvog koraka ← vodi na „Dve opcije“ (korak 2).
   */
   :root {
     --font: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
@@ -152,7 +152,7 @@
 
 <script>
 (() => {
-  const PREV = "options.html?beat=3", NEXT = "depth.html";
+  const PREV = "options.html?beat=2", NEXT = "depth.html";
   const params = new URLSearchParams(location.search);
   const STATIC = params.get("static") === "1";
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
