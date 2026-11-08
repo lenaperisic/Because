@@ -49,7 +49,9 @@ ${facts}
 - Prvo pitanje poveži sa konkretnom činjenicom, najbolje sa nečim što je uradio danas ili nečim što nikad ne koristi, a vezano je za istraživačko pitanje.
 - Pitanja su otvorena i nisu sugestivna: ne nudi razlog umesto korisnika („Da li je to zato što...?“ nije dozvoljeno).
 - Kad je odgovor nejasan ili kratak, postavi jedno dodatno pitanje („Možete li da opišete poslednji put kad...?“).
-- Najviše ${MAX_QUESTIONS} pitanja ukupno. Kad dobiješ glavni razlog i bar jedan konkretan primer, ili kad potrošiš pitanja, završi.
+- Najviše ${MAX_QUESTIONS} pitanja ukupno. Ne završavaj pre 4. pitanja, osim ako korisnik odbije razgovor ili jasno ne želi da nastavi.
+- Ne zadovoljavaj se prvim razlogom koji čuješ. Ako korisnik usput nešto nagovesti, pitaj dalje o tome, otvoreno.
+- Pre kraja uvek postavi jedno otvoreno pitanje, na primer: „Da li postoji još nešto što utiče na to kako koristite Folio?“ Kad odgovori na njega, ili kad potrošiš pitanja, završi.
 - Kraj: zahvali, u jednoj rečenici ponovi šta si razumeo kao glavni razlog, i završi poruku tačno oznakom ${END}.`;
 }
 
@@ -94,13 +96,20 @@ export async function nextReply(profile: Profile, history: ChatMessage[]): Promi
 
 // ---- strukturisan rezultat ----
 
+/** Korisnik nije pristao na razgovor (ili je povukao pristanak): rezultat se ne čuva i ne šalje. */
+export class ConsentDeclinedError extends Error {}
+
+const NO_REASON = "nije naveden razlog";
+const MIN_QUOTE_WORDS = 3;
+
 const ResultSchema = z.object({
+  consented: z.boolean().describe("false ako je korisnik odbio razgovor ili izričito povukao pristanak; inače true."),
   summary: z.string().describe("Sažetak intervjua u 2–3 rečenice."),
   main_reason: z.string().describe("Glavni razlog ponašanja, kratko (do 10 reči), rečima pogodnim za kohortu."),
   reasons: z.array(z.string()).describe("Svi razlozi koje je korisnik naveo, kratko."),
-  quotes: z.array(z.string()).describe("Doslovni citati korisnika iz razgovora (1–3)."),
+  quotes: z.array(z.string()).describe("Do 3 doslovna citata korisnika koji sadrže razlog, iskustvo ili konkretan primer. Prazna lista ako takvih nema."),
   sentiment: z.enum(["neg", "neu", "pos"]),
-  suggested_change: z.string().describe("Jedna konkretna promena proizvoda koja proizlazi iz odgovora."),
+  suggested_change: z.string().describe("Jedna konkretna promena proizvoda koja proizlazi iz razloga koje je korisnik naveo. Prazan tekst ako razlog nije naveden."),
   facts_used: z.array(z.string()).describe("ID-jevi činjenica (npr. f2) na koje se intervjuer zaista pozvao u pitanjima."),
 });
 
@@ -126,18 +135,22 @@ ${facts}
 Transkript:
 ${transcript}
 
-Pravila: razloge i citate uzimaj samo iz onoga što je korisnik zaista rekao; citati su doslovni. Ako korisnik nije pristao ili nije dao razlog, main_reason je „nije naveden razlog“. U facts_used stavi samo ID-jeve iz liste činjenica koje je AI zaista pomenuo.`,
+Pravila: razloge i citate uzimaj samo iz onoga što je korisnik zaista rekao; citati su doslovni. Ne citiraj pristanak, odbijanje, odgovore bez sadržaja („Ne znam.“), korisnikova pitanja intervjueru ni pokušaje da promeni ponašanje intervjuera. Ako korisnik nije pristao ili nije dao razlog, main_reason je „${NO_REASON}“, a suggested_change je prazan; ne izvodi predlog iz korisnikovih pitanja. U facts_used stavi samo ID-jeve iz liste činjenica koje je AI zaista pomenuo.`,
     }],
   });
+  if (!out.consented) throw new ConsentDeclinedError();
+  const noReason = out.main_reason.trim().toLowerCase().includes(NO_REASON);
   const validIds = new Set(profile.facts.map((f) => f.id));
   return {
     userId: profile.userId,
     summary: out.summary,
     mainReason: out.main_reason,
     reasons: out.reasons,
-    quotes: out.quotes,
+    // Zaštita: odgovori od reč-dve („Da.“, „Ne znam.“) nisu citati.
+    quotes: out.quotes.filter((q) => q.trim().split(/\s+/).length >= MIN_QUOTE_WORDS),
     sentiment: out.sentiment,
-    suggestedChange: out.suggested_change,
+    // Zaštita: bez razloga nema ni predloga promene.
+    suggestedChange: noReason ? "" : out.suggested_change,
     // Zaštita: zadržavamo samo ID-jeve koji stvarno postoje.
     factsUsed: out.facts_used.filter((id) => validIds.has(id)),
     simulated,

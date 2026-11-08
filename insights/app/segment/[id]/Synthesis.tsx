@@ -11,6 +11,17 @@ type Props = {
   interviews: number;
 };
 
+/** Zaključak: prva rečenica je naslov, ostatak ide ispod u normalnoj veličini. */
+function Takeaway({ text }: { text: string }) {
+  const m = text.trim().match(/^(.+?[.!?])\s+(\S[\s\S]*)$/);
+  return (
+    <>
+      <p className="takeaway">{m ? m[1] : text}</p>
+      {m && <p className="takeaway-rest">{m[2]}</p>}
+    </>
+  );
+}
+
 /** Sinteza razloga (Claude). Povlači se posle učitavanja, da strana ne čeka model. */
 export default function Synthesis({ segmentId, version, interviews }: Props) {
   const [data, setData] = useState<SynthesisData | null>(null);
@@ -68,17 +79,17 @@ export default function Synthesis({ segmentId, version, interviews }: Props) {
           {loading ? "Pravim sintezu..." : "Napravi ponovo"}
         </button>
       </div>
+      {!data && loading && <p className="muted">Pravim sintezu iz intervjua, to traje do 20-ak sekundi...</p>}
+      {error && <p className="error">{data ? "Nova sinteza nije uspela, prikazana je prethodna: " : "Sinteza nije uspela: "}{error}</p>}
+      {data && data.takeaway && <Takeaway text={data.takeaway} />}
       {data && (
         <p className="muted">
           Na osnovu {data.basedOn} intervjua
           {data.simulatedCount > 0 && (
-            <> · <span className="pill">{data.simulatedCount === data.basedOn ? "svi simulirani" : `simulirano: ${data.simulatedCount}`}</span></>
+            <> · <span className="pill sim">{data.simulatedCount === data.basedOn ? "svi simulirani" : `simulirano: ${data.simulatedCount}`}</span></>
           )}
         </p>
       )}
-      {!data && loading && <p className="muted">Pravim sintezu iz intervjua, to traje do 20-ak sekundi...</p>}
-      {error && <p className="error">{data ? "Nova sinteza nije uspela, prikazana je prethodna: " : "Sinteza nije uspela: "}{error}</p>}
-      {data && data.takeaway && <p className="takeaway">{data.takeaway}</p>}
       {data && data.themes.length === 0 && <p className="muted">Model nije izdvojio teme.</p>}
       {data && data.themes.length > 0 && (
         <div className="themes">
@@ -86,7 +97,7 @@ export default function Synthesis({ segmentId, version, interviews }: Props) {
             <div key={`${i}|${t.title}`} className="theme">
               <b>{t.title}</b> <span className="pill">{personCount(t.count)}</span>
               {t.quotes.map(cleanQuote).filter(Boolean).map((q, j) => (
-                <blockquote key={`${j}|${q}`} className="quote">„{q}“</blockquote>
+                <blockquote key={`${j}|${q}`} className="quote"><span className="qm" aria-hidden="true">„</span>{q}“</blockquote>
               ))}
             </div>
           ))}

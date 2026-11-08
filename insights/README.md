@@ -1,4 +1,4 @@
-# Insights · AI intervjui na PostHog podacima
+# Because (insights) · AI intervjui na PostHog podacima
 
 Faza 1 iz `../plan-ai-intervjui.md` (Checkpoint 1): **PostHog događaji → profil sa činjenicama → grupa → AI intervju → sačuvan rezultat.**
 

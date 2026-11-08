@@ -1,70 +1,150 @@
-:root { --bg: #f7f7f8; --card: #fff; --text: #1f2328; --muted: #656d76; --border: #e3e5e8; --accent: #1a73e8; --ai: #eef3fd; }
+/*
+  Folio · AI intervjui. Pravac: terenska beležnica istraživača.
+  Duboko teget-tirkizno mastilo na čistoj beloj, a crveni marker za glas ljudi (navodnici, osoba uživo).
+  Jedan fokus po ekranu: na ekranu grupe to je sinteza, ispisana krupno u bloku boje mastila.
+*/
+:root {
+  --bg: oklch(1 0 0);
+  --wash: oklch(0.968 0.01 205);
+  --line: oklch(0.885 0.014 205);
+  --ink: oklch(0.235 0.03 212);
+  --ink-soft: oklch(0.42 0.026 212);
+  --primary: oklch(0.41 0.085 200);
+  --primary-wash: oklch(0.945 0.026 200);
+  --deep: oklch(0.285 0.058 205);
+  --on-deep: oklch(0.975 0.008 200);
+  --on-deep-soft: oklch(0.84 0.03 200);
+  --voice: oklch(0.6 0.19 34);
+  --voice-strong: oklch(0.52 0.19 32);
+  --voice-on-deep: oklch(0.76 0.15 42);
+  --danger: oklch(0.5 0.19 27);
+  --font-sans: var(--font-schibsted), "Segoe UI", system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
-h1 { font-size: 22px; margin: 0 0 4px; }
-h2 { font-size: 16px; margin: 0 0 8px; }
-.muted { color: var(--muted); font-size: 13px; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); margin-top: 16px; }
-.split { display: grid; gap: 16px; grid-template-columns: 1fr 340px; margin-top: 16px; align-items: start; }
-@media (max-width: 800px) { .split { grid-template-columns: 1fr; } }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-button { font: inherit; border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
-button.secondary { background: #fff; color: var(--accent); }
-button:disabled { opacity: .5; cursor: default; }
-ul.users { list-style: none; padding: 0; margin: 0; max-height: 260px; overflow: auto; font-size: 13px; }
-ul.users li { padding: 3px 0; display: flex; justify-content: space-between; gap: 8px; }
-.facts { list-style: none; padding: 0; margin: 0; font-size: 13px; }
-.facts li { padding: 4px 0; border-bottom: 1px solid var(--border); }
-.facts code { color: var(--muted); margin-right: 6px; }
-.chat { display: flex; flex-direction: column; gap: 10px; min-height: 360px; }
-.msg { max-width: 80%; padding: 10px 12px; border-radius: 12px; white-space: pre-wrap; }
-.msg.assistant { background: var(--ai); align-self: flex-start; }
-.msg.user { background: var(--accent); color: #fff; align-self: flex-end; }
-.composer { display: flex; gap: 8px; margin-top: 12px; }
-.composer textarea { flex: 1; font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; resize: vertical; min-height: 44px; }
-.pill { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--ai); color: var(--accent); }
-.error { color: #c5221f; font-size: 13px; }
-dl.result dt { font-weight: 600; margin-top: 8px; }
-dl.result dd { margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--font-sans); font-feature-settings: "kern"; }
+main { max-width: 1180px; margin: 0 auto; padding: clamp(22px, 3vw, 44px) clamp(16px, 3vw, 40px) 80px; }
+
+/* Brend: Because. Znak ∵ („zato što“) bojom glasa, reč mastilom. */
+.brandbar { max-width: 1180px; margin: 0 auto; padding: 20px clamp(16px, 3vw, 40px) 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+.brand:hover .wordmark { color: var(--primary); }
+.brand-mark { width: 26px; height: 26px; fill: var(--voice); flex: none; }
+.wordmark { font-size: 1.6rem; font-weight: 850; letter-spacing: -0.04em; line-height: 1; transition: color 160ms var(--ease-out); }
+.brandbar-meta { color: var(--ink-soft); font-size: 0.9375rem; font-weight: 550; }
+
+h1 { font-size: clamp(2.25rem, 1.5rem + 2.6vw, 3.9rem); line-height: 1.04; font-weight: 800; letter-spacing: -0.028em; margin: 0 0 14px; text-wrap: balance; }
+h2 { font-size: 1.25rem; line-height: 1.25; font-weight: 750; letter-spacing: -0.01em; margin: 0 0 10px; text-wrap: balance; }
+p { margin: 0 0 12px; }
+.lede { font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem); line-height: 1.4; font-weight: 450; max-width: 46ch; color: var(--ink); margin-bottom: 18px; text-wrap: pretty; }
+.muted { color: var(--ink-soft); font-size: 0.9375rem; }
+
+a { color: var(--primary); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: color-mix(in oklch, var(--primary) 35%, transparent); }
+a:hover { text-decoration-color: currentColor; }
+h2 a { text-decoration: none; color: var(--ink); }
+h2 a:hover { color: var(--primary); }
+:focus-visible { outline: 2px solid var(--voice); outline-offset: 2px; border-radius: 4px; }
+
+button { font: 600 0.9375rem/1 var(--font-sans); border: 1.5px solid var(--ink); background: var(--ink); color: var(--bg); border-radius: 999px; padding: 11px 18px; cursor: pointer; transition: background 160ms var(--ease-out), color 160ms var(--ease-out), transform 160ms var(--ease-out); }
+button:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button.secondary { background: transparent; color: var(--ink); }
+button.secondary:hover:not(:disabled) { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+button:disabled { opacity: 0.45; cursor: default; }
+
+.card { background: var(--bg); border: 1px solid var(--line); border-radius: 18px; padding: clamp(18px, 2vw, 26px); }
+.grid { display: grid; gap: clamp(14px, 1.6vw, 22px); grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 28px; }
+.split { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr) 360px; margin-top: 28px; align-items: start; }
+@media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+
+/* Oznake: uživo je glas (crveni marker), simulirano se povlači (isprekidano), ostalo je mirno mastilo. */
+.pill { display: inline-block; font-size: 0.8125rem; font-weight: 650; line-height: 1.2; letter-spacing: 0; padding: 3px 10px; border-radius: 999px; background: var(--primary-wash); color: var(--primary); vertical-align: 0.15em; white-space: nowrap; }
+.pill.live { background: var(--voice-strong); color: oklch(1 0 0); }
+.pill.live::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: 0.08em; animation: live-pulse 1.8s var(--ease-out) infinite; }
+.pill.sim { background: transparent; color: var(--ink-soft); border: 1px dashed var(--line); font-weight: 550; }
+@keyframes live-pulse { 50% { opacity: 0.35; } }
+
+.error { color: var(--danger); font-size: 0.9375rem; font-weight: 550; }
+
+/* Početna: grupe */
+ul.users { list-style: none; padding: 0; margin: 14px 0 0; max-height: 280px; overflow: auto; font-size: 0.9375rem; border-top: 1px solid var(--line); }
+ul.users li { padding: 8px 0; display: flex; flex-direction: column; gap: 1px; border-bottom: 1px solid var(--line); }
+ul.users li a { text-decoration: none; font-weight: 550; }
+
+/* Intervju */
+.facts { list-style: none; padding: 0; margin: 0; font-size: 0.9375rem; }
+.facts li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.facts code { color: var(--ink-soft); margin-right: 8px; font-size: 0.8125rem; }
+.chat { display: flex; flex-direction: column; gap: 12px; min-height: 360px; }
+.msg { max-width: 82%; padding: 12px 16px; border-radius: 18px; white-space: pre-wrap; font-size: 1.0625rem; line-height: 1.5; }
+.msg.assistant { background: var(--wash); align-self: flex-start; border-bottom-left-radius: 6px; }
+.msg.user { background: var(--deep); color: var(--on-deep); align-self: flex-end; border-bottom-right-radius: 6px; }
+.composer { display: flex; gap: 10px; margin-top: 16px; align-items: flex-end; }
+.composer textarea { flex: 1; font: inherit; font-size: 1.0625rem; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; resize: vertical; min-height: 52px; color: var(--ink); }
+.composer textarea:focus { outline: none; border-color: var(--primary); }
+dl.result dt { font-weight: 700; margin-top: 12px; }
+dl.result dd { margin: 2px 0 0; }
+
 /* Ekran grupe (app/segment/[id]) */
 .table-card { min-width: 0; }
 .table-wrap { overflow-x: auto; }
-table.people { width: 100%; border-collapse: collapse; font-size: 13px; }
-table.people th, table.people td { text-align: left; vertical-align: top; padding: 6px; border-bottom: 1px solid var(--border); }
-table.people th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+table.people { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+table.people th, table.people td { text-align: left; vertical-align: top; padding: 9px 6px; border-bottom: 1px solid var(--line); }
+table.people th { color: var(--ink-soft); font-weight: 650; font-size: 0.8125rem; white-space: nowrap; }
+table.people td a { font-weight: 600; text-decoration: none; }
 .nowrap { white-space: nowrap; }
-ul.reasons { list-style: none; padding: 0; margin: 0; font-size: 13px; }
-ul.reasons > li { padding: 10px 0; border-bottom: 1px solid var(--border); }
+ul.reasons { list-style: none; padding: 0; margin: 0; }
+ul.reasons > li { padding: 14px 0; border-bottom: 1px solid var(--line); }
 ul.reasons > li:last-child { border-bottom: 0; padding-bottom: 0; }
-.quote { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--border); }
-/* Sinteza (Claude) na ekranu grupe */
-.synthesis { margin-top: 16px; }
-.synthesis-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.synthesis-head h2 { margin: 0; }
-.takeaway { background: var(--ai); border-radius: 8px; padding: 10px 12px; margin: 10px 0 0; }
-.themes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: 12px; font-size: 13px; }
-.theme { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
 
-/* ---- dashboard (faza 2) ---- */
-header.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
-.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* Citat: glas korisnika, sa okačenim crvenim navodnikom umesto bočne linije. */
+.quote { position: relative; margin: 10px 0 0; padding-left: 0.9em; font-size: 1rem; line-height: 1.5; text-wrap: pretty; }
+.qm { position: absolute; left: -0.05em; top: -0.12em; font-size: 1.6em; line-height: 1; font-weight: 800; color: var(--voice); }
+
+/* Sinteza (Claude): jedini dramatični trenutak, blok u boji mastila. */
+.synthesis { margin-top: 32px; background: var(--deep); color: var(--on-deep); border-color: transparent; border-radius: 26px; padding: clamp(22px, 3.4vw, 48px); }
+.synthesis h2 { color: var(--on-deep-soft); font-size: 1rem; font-weight: 650; letter-spacing: 0; margin: 0; }
+.synthesis .muted { color: var(--on-deep-soft); }
+.synthesis .error { color: oklch(0.82 0.12 40); }
+.synthesis-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.synthesis button.secondary { color: var(--on-deep); border-color: color-mix(in oklch, var(--on-deep) 55%, transparent); }
+.synthesis button.secondary:hover:not(:disabled) { background: var(--on-deep); color: var(--deep); border-color: var(--on-deep); }
+.synthesis .pill { background: color-mix(in oklch, var(--on-deep) 14%, transparent); color: var(--on-deep); }
+.synthesis .pill.sim { background: transparent; color: var(--on-deep-soft); border-color: color-mix(in oklch, var(--on-deep) 35%, transparent); }
+.takeaway { font-size: clamp(1.4rem, 1rem + 1.25vw, 2.05rem); line-height: 1.22; font-weight: 700; letter-spacing: -0.018em; max-width: 40ch; margin: 18px 0 12px; text-wrap: balance; animation: rise 700ms var(--ease-out); }
+.takeaway-rest { font-size: 1.125rem; line-height: 1.5; color: var(--on-deep-soft); max-width: 64ch; margin: 0 0 14px; text-wrap: pretty; }
+.themes { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-top: 28px; }
+.theme { border-top: 1px solid color-mix(in oklch, var(--on-deep) 28%, transparent); padding: 16px 4px 4px 0; }
+.theme > b { font-size: 1.125rem; font-weight: 750; line-height: 1.3; }
+.theme .quote { color: var(--on-deep-soft); font-size: 0.975rem; }
+.theme .qm { color: var(--voice-on-deep); }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .takeaway { animation: none; }
+  .pill.live::before { animation: none; }
+  button { transition: none; }
+}
+
+
+/* Početna kao dashboard (iz task-2), na bojama redizajna */
+header.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px 24px; flex-wrap: wrap; }
+header.top > div:first-child { flex: 1 1 520px; }
+.actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.live { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
-.live .dot { width: 8px; height: 8px; border-radius: 50%; background: #1e8e3e; animation: pulse 2s infinite; }
-@keyframes pulse { 50% { opacity: .3; } }
-.live-strip { margin-top: 16px; border-color: #1e8e3e55; }
-a.card.segment { color: inherit; display: block; transition: border-color .15s, box-shadow .15s; }
-a.card.segment:hover { text-decoration: none; border-color: var(--accent); box-shadow: 0 2px 10px #1a73e81a; }
-.question { font-weight: 600; margin: 6px 0; }
-.insight { background: var(--ai); border-left: 3px solid var(--accent); padding: 8px 10px; border-radius: 6px; margin: 8px 0 0; }
-.pill.sim { background: #fef7e0; color: #a05a00; }
-.bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 4px 0 8px; background: var(--border); }
-.bar span { background: #9aa0a6; }
-.bar .role-lekar { background: #1a73e8; }
-.bar .role-developer { background: #9334e6; }
-.bar .role-bankar { background: #1e8e3e; }
-.bar .role-pravnik { background: #e8710a; }
-.bar .role-student { background: #d01884; }
+.live-toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 0.9375rem; color: var(--ink-soft); }
+.live-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--voice); animation: live-pulse 1.8s var(--ease-out) infinite; }
+.live-strip { margin-top: 24px; border-color: color-mix(in oklch, var(--voice) 45%, transparent); }
+a.card.segment { color: inherit; display: block; text-decoration: none; transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out); }
+a.card.segment:hover { border-color: var(--primary); box-shadow: 0 4px 18px color-mix(in oklch, var(--primary) 12%, transparent); }
+.question { font-weight: 650; margin: 6px 0 10px; }
+.insight { background: var(--primary-wash); border-radius: 12px; padding: 10px 14px; margin: 10px 0 0; }
+.bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 4px 0 10px; background: var(--line); }
+.bar span { background: var(--ink-soft); }
+.bar .role-lekar { background: oklch(0.55 0.13 250); }
+.bar .role-developer { background: oklch(0.55 0.15 300); }
+.bar .role-bankar { background: oklch(0.58 0.12 160); }
+.bar .role-pravnik { background: oklch(0.68 0.14 65); }
+.bar .role-student { background: oklch(0.6 0.17 350); }
+@media (prefers-reduced-motion: reduce) { .live-toggle .dot { animation: none; } }

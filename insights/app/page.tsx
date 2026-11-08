@@ -17,7 +17,8 @@ export default function Home() {
     <main>
       <header className="top">
         <div>
-          <h1>Folio · AI intervjui</h1>
+          <h1>Grupe korisnika Folio-a</h1>
+          <p className="lede">PostHog vam kaže šta korisnici rade. Because ih pita zašto, i to svakog o onome što je on uradio.</p>
           <p className="muted">
             {cache.source === "posthog" ? "PostHog" : "lokalna seed rezerva"} · {cache.people.length} osoba
             {cache.fetchedAt && ` · povučeno ${new Date(cache.fetchedAt).toLocaleString("sr-RS")}`}
@@ -33,7 +34,7 @@ export default function Home() {
 
       {live.length > 0 && (
         <section className="card live-strip">
-          <h2>Uživo iz Folio-a</h2>
+          <h2>Uživo iz Folio-a <span className="pill live">uživo</span></h2>
           <ul className="users">
             {live.map((id) => {
               const r = byUser.get(id);

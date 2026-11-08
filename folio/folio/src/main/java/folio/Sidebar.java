@@ -36,7 +36,7 @@ public class Sidebar extends JPanel {
 
         add(left(card));
         add(Box.createVerticalStrut(14));
-        open = new Widgets.Pill("Otvori PDF", Widgets.Kind.PRIMARY).shadow(true).icon(Widgets.Icon.UPLOAD);
+        open = new Widgets.Pill("Otvori PDF", Widgets.Kind.PRIMARY).color(Theme.TEXT).icon(Widgets.Icon.UPLOAD);
         open.setFont(Theme.bold(14f));
         open.setBorder(new EmptyBorder(14, 24, 14, 26));
         open.addActionListener(e -> app.toast("Demo: dokumenti su već učitani iz JSON-a"));
@@ -58,7 +58,6 @@ public class Sidebar extends JPanel {
     }
 
     public void refresh() {
-        open.color(app.profile.color);
         card.repaint();
         list.revalidate();
         list.repaint();
@@ -74,7 +73,7 @@ public class Sidebar extends JPanel {
         @Override protected void paintComponent(Graphics g) {
             Graphics2D g2 = Theme.smooth(g);
             Model.Profile p = app.profile;
-            Widgets.avatar(g2, p.initials(), p.color, 0, 6, 44);
+            Widgets.avatar(g2, p.initials(), Theme.TEXT, 0, 6, 44);
             g2.setFont(Theme.bold(15f));
             g2.setColor(Theme.TEXT);
             FontMetrics fm = g2.getFontMetrics();
@@ -117,11 +116,13 @@ public class Sidebar extends JPanel {
             for (Model.Doc d : app.profile.docs) {
                 boolean sel = d == app.doc;
                 if (sel) {
-                    Theme.shadow(g2, 0, y + 2, w, ROW - 6, 14, 4, 28);
+                    // Otvoren dokument: bela kartica sa tankim crnim obodom, bez senke i bočne trake.
+                    RoundRectangle2D row = new RoundRectangle2D.Double(0.5, y + 2.5, w - 1, ROW - 7, 10, 10);
                     g2.setColor(Theme.BG);
-                    g2.fill(new RoundRectangle2D.Double(0, y + 2, w, ROW - 6, 14, 14));
-                    g2.setColor(app.profile.color);
-                    g2.fill(new RoundRectangle2D.Double(0, y + 14, 4, ROW - 30, 4, 4));
+                    g2.fill(row);
+                    g2.setColor(Theme.TEXT);
+                    Theme.stroke(g2, 1.2f);
+                    g2.draw(row);
                 }
                 fileIcon(g2, 14, y + 13, d);
                 g2.setFont(Theme.bold(13f));
@@ -138,10 +139,19 @@ public class Sidebar extends JPanel {
                     g2.setFont(Theme.bold(10f));
                     FontMetrics bf = g2.getFontMetrics();
                     badgeW = bf.stringWidth(badge) + 14;
-                    Color bc = d.needsOcr() ? Theme.hex("#5F6368") : Theme.hex("#B06000");
-                    g2.setColor(Theme.mix(d.needsOcr() ? Theme.hex("#9AA0A6") : Theme.hex("#F9AB00"), Color.WHITE, 0.8));
-                    g2.fill(new RoundRectangle2D.Double(w - badgeW - 4, y + 34, badgeW, 18, 18, 18));
-                    g2.setColor(bc);
+                    RoundRectangle2D b = new RoundRectangle2D.Double(w - badgeW - 4, y + 34, badgeW, 18, 5, 5);
+                    if (d.needsOcr()) {
+                        // Sken: obaveštenje, ne posao, pa samo obod.
+                        g2.setColor(Theme.MUTED);
+                        Theme.stroke(g2, 1f);
+                        g2.draw(b);
+                        g2.setColor(Theme.MUTED);
+                    } else {
+                        // Čeka korisnika: marker.
+                        g2.setColor(Theme.MARKER);
+                        g2.fill(b);
+                        g2.setColor(Theme.TEXT);
+                    }
                     g2.drawString(badge, w - badgeW + 3, y + 47);
                     g2.setFont(Theme.font(11.5f));
                 }
@@ -163,17 +173,19 @@ public class Sidebar extends JPanel {
             p.lineTo(x + 4, y + 36);
             p.quadTo(x, y + 36, x, y + 32);
             p.closePath();
-            g2.setColor(Theme.mix(d.color, Color.WHITE, 0.82));
+            // List papira: belo sa crnim obodom, savijen ugao; vrsta dokumenta ide u tekst, ne u boju.
+            g2.setColor(Theme.BG);
             g2.fill(p);
-            g2.setColor(d.color);
+            g2.setColor(Theme.TEXT);
+            Theme.stroke(g2, 1.2f);
+            g2.draw(p);
             Path2D fold = new Path2D.Double();
             fold.moveTo(x + 20, y);
             fold.lineTo(x + 20, y + 8);
             fold.lineTo(x + 28, y + 8);
-            fold.closePath();
-            g2.fill(fold);
+            g2.draw(fold);
             g2.setFont(Theme.bold(8.5f));
-            g2.drawString("PDF", (float) x + 5, (float) y + 28);
+            g2.drawString("PDF", (float) x + 4, (float) y + 28);
         }
     }
 
@@ -203,9 +215,12 @@ public class Sidebar extends JPanel {
                 g2.setColor(Theme.MUTED);
                 g2.drawString(r[0], 4, y);
                 g2.setFont(Theme.bold(13f));
-                g2.setColor("0".equals(r[1]) ? Theme.FAINT : Theme.TEXT);
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(r[1], getWidth() - 6 - fm.stringWidth(r[1]), y);
+                int nx = getWidth() - 8 - fm.stringWidth(r[1]);
+                boolean waiting = !"0".equals(r[1]);
+                if (waiting) Theme.marker(g2, nx - 7, y - 14, fm.stringWidth(r[1]) + 14, 19);
+                g2.setColor(waiting ? Theme.TEXT : Theme.FAINT);
+                g2.drawString(r[1], nx, y);
                 y += 26;
             }
             g2.dispose();

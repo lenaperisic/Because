@@ -38,7 +38,7 @@ export default function LiveRefresh({ posthog }: { posthog: boolean }) {
   }, [pull, router]);
 
   return (
-    <span className="live">
+    <span className="live-toggle">
       <span className="dot" /> uživo
       {posthog && (
         <label className="muted">
