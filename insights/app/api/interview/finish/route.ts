@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { summarize } from "@/lib/interview";
+import { ConsentDeclinedError, summarize } from "@/lib/interview";
 import { getProfile } from "@/lib/profiles";
 import { saveInterview } from "@/lib/store";
 
@@ -26,6 +26,8 @@ export async function POST(req: Request) {
       headers: { "X-Posthog": record.posthogSentAt ? "sent" : "skipped" },
     });
   } catch (e) {
+    // Bez pristanka se ništa ne čuva i ne šalje u PostHog.
+    if (e instanceof ConsentDeclinedError) return NextResponse.json({ declined: true });
     console.error(e);
     return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
   }
