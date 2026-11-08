@@ -4,11 +4,14 @@ import { loadCache } from "@/lib/posthog";
 import { buildSegments } from "@/lib/segments";
 import { listInterviews } from "@/lib/store";
 import type { InterviewResult } from "@/lib/types";
+import AutoRefresh from "../../AutoRefresh";
+import { cleanQuote, personCount } from "./format";
+import Synthesis from "./Synthesis";
 
 export const dynamic = "force-dynamic";
 
 // Ekran grupe: ko je u grupi, ko je intervjuisan i koji glavni razlozi se ponavljaju.
-// Razloge ovde grupiše kod (isti glavni razlog), bez AI-ja.
+// Sintezu (Claude) povlači klijent posle učitavanja; „Razlozi“ desno grupiše kod, bez AI-ja.
 
 const SENTIMENT: Record<string, string> = { neg: "negativan", neu: "neutralan", pos: "pozitivan" };
 /** Glavni razlog kad korisnik nije dao razlog (lib/interview.ts); u listi razloga ide poslednji. */
@@ -21,27 +24,10 @@ type ReasonGroup = { key: string; label: string; count: number; simulated: numbe
 const isSeed = (id: string) => id.startsWith("seed_");
 const interviewHref = (id: string) => `/interview/${encodeURIComponent(id)}`;
 
-/** 1 osoba, 2 osobe, 5 osoba, 22 osobe. */
-function personCount(n: number) {
-  const few = n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14);
-  return `${n} ${few ? "osobe" : "osoba"}`;
-}
-
 /** Jedan razmak, bez tačke na kraju. */
 const tidy = (s: string) => s.trim().replace(/\s+/g, " ").replace(/[.!…]+$/u, "");
 /** Ključ za grupisanje: isti razlog bez obzira na velika slova i tačku na kraju. */
 const reasonKey = (s: string) => tidy(s).toLowerCase();
-
-/** Parovi navodnika kojima model ponekad obavije ceo citat. */
-const QUOTE_PAIRS = ["„“", "„”", "“”", "«»", "»«", '""'];
-
-/** Citat bez navodnika, samo ako je njima obavijen ceo citat; navodnike unutar citata ne dira. */
-function cleanQuote(q: string) {
-  const t = q.trim();
-  const open = t.charAt(0), close = t.charAt(t.length - 1), inner = t.slice(1, -1);
-  const wrapped = t.length >= 2 && QUOTE_PAIRS.includes(open + close) && !inner.includes(open) && !inner.includes(close);
-  return wrapped ? inner.trim() : t;
-}
 
 /** Do `max` citata: prvo iz pravih intervjua, po jedan od svake osobe, bez ponavljanja. */
 function pickQuotes(results: InterviewResult[], max: number): Quote[] {
@@ -96,10 +82,15 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
   const members = new Set(segment.userIds);
   const peopleById = new Map(cache.people.map((p) => [p.distinct_id, p]));
   const results = new Map<string, InterviewResult>();
+  let latest = "";
   for (const record of listInterviews()) {
-    if (members.has(record.result.userId)) results.set(record.result.userId, record.result);
+    if (!members.has(record.result.userId)) continue;
+    results.set(record.result.userId, record.result);
+    if (record.completedAt > latest) latest = record.completedAt;
   }
   const done = [...results.values()];
+  // Menja se kad stigne nov (ili ponovljen) intervju, pa sinteza tada povuče novu verziju.
+  const resultsVersion = `${done.length}:${latest}`;
   const simulated = done.filter((r) => r.simulated).length;
   const reasons = groupReasons(done);
   // Prave Folio osobe (ne seed) prve, pa intervjuisani, pa po ID-ju.
@@ -118,6 +109,8 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
         Intervjuisano <b>{done.length} od {segment.userIds.length}</b>
         {simulated > 0 && <span className="muted"> (simulirano: {simulated})</span>}
       </p>
+      <AutoRefresh />
+      <Synthesis segmentId={segment.id} version={resultsVersion} interviews={done.length} />
       <div className="split">
         <section className="card table-card">
           <h2>Korisnici</h2>

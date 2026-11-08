@@ -2,6 +2,7 @@ import Link from "next/link";
 import { loadCache } from "@/lib/posthog";
 import { buildSegments } from "@/lib/segments";
 import { listInterviews } from "@/lib/store";
+import AutoRefresh from "./AutoRefresh";
 import RefreshButton from "./RefreshButton";
 
 export const dynamic = "force-dynamic";
@@ -23,11 +24,16 @@ export default function Home() {
         Izvor: {cache.source === "posthog" ? "PostHog" : "lokalna seed rezerva"} · {cache.people.length} osoba
         {cache.fetchedAt && ` · ${new Date(cache.fetchedAt).toLocaleString("sr-RS")}`} · <RefreshButton />
       </p>
+      <AutoRefresh />
       <div className="grid">
         {segments.map((s) => (
           <section key={s.id} className="card">
             <h2><Link href={`/segment/${s.id}`}>{s.name}</Link> <span className="pill">{s.userIds.length}</span></h2>
             <p className="muted">{s.researchQuestion}</p>
+            <p className="muted">
+              Intervjuisano <b>{s.userIds.filter((id) => done.has(id)).length}</b> od {s.userIds.length} ·{" "}
+              <Link href={`/segment/${s.id}`}>Sinteza i razlozi →</Link>
+            </p>
             <ul className="users">
               {order(s.userIds).map((id) => (
                 <li key={id}>

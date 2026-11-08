@@ -40,3 +40,10 @@ ul.reasons { list-style: none; padding: 0; margin: 0; font-size: 13px; }
 ul.reasons > li { padding: 10px 0; border-bottom: 1px solid var(--border); }
 ul.reasons > li:last-child { border-bottom: 0; padding-bottom: 0; }
 .quote { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--border); }
+/* Sinteza (Claude) na ekranu grupe */
+.synthesis { margin-top: 16px; }
+.synthesis-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.synthesis-head h2 { margin: 0; }
+.takeaway { background: var(--ai); border-radius: 8px; padding: 10px 12px; margin: 10px 0 0; }
+.themes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: 12px; font-size: 13px; }
+.theme { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
