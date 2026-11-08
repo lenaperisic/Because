@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Because · The problem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /*
+    Because · uvodni slajd (problem), 4 koraka uz govor. Isti stil kao naslovna kartica.
+    Napred: →, Space, PageDown, Enter, klik. Nazad: ←, PageUp. 1–4: skok na korak. Home: ispočetka.
+    ?beat=3: počni od 3. koraka. ?static=1: bez animacija, gotovo stanje (za PNG). F11: ceo ekran.
+  */
+  :root {
+    --font: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+    --deep: #10353c;
+    --text: #f3f7f7;
+    --soft: #a9c3c6;
+    --muted: #8fb0b4;
+    --line: rgba(243, 247, 247, 0.22);
+    --voice: #e5572f;
+    --ink: #13252a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #071a1e; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 50% 50%; background: var(--deep); color: var(--text); font-family: var(--font); cursor: pointer; }
+  .beat { position: absolute; inset: 0; opacity: 0; visibility: hidden; }
+  .beat.on { visibility: visible; }
+
+  .big { position: absolute; left: 120px; font-size: 300px; font-weight: 900; line-height: 0.9; letter-spacing: -0.045em; font-variant-numeric: tabular-nums; }
+  .body { position: absolute; left: 124px; width: 760px; font-size: 52px; font-weight: 700; line-height: 1.16; letter-spacing: -0.015em; text-wrap: balance; }
+  .source { position: absolute; left: 124px; bottom: 132px; font-size: 26px; font-weight: 600; color: var(--muted); }
+  .why { color: var(--voice); }
+
+  /* 1: 100 timova, 84 ne zna zašto (16 zna) */
+  #b1 .big { top: 230px; color: var(--voice); }
+  #b1 .body { top: 540px; }
+  .dots { position: absolute; left: 1150px; top: 262px; display: grid; grid-template-columns: repeat(10, 36px); gap: 20px; }
+  .dots i { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--line); }
+  .dots i.lit { background: var(--voice); border-color: var(--voice); }
+  .legend { position: absolute; left: 1150px; top: 852px; font-size: 26px; font-weight: 600; color: var(--muted); display: flex; gap: 36px; }
+  .legend span::before { content: ""; display: inline-block; width: 18px; height: 18px; border-radius: 50%; margin-right: 10px; vertical-align: -2px; border: 3px solid var(--line); }
+  .legend span.k::before { background: var(--voice); border-color: var(--voice); }
+
+  /* 2: podaci o svakom kliku, a odgovor na „zašto“ nema */
+  #b2 h2 { position: absolute; left: 120px; top: 210px; margin: 0; font-size: 88px; font-weight: 900; letter-spacing: -0.035em; line-height: 1; }
+  .search { position: absolute; left: 120px; top: 380px; width: 780px; height: 112px; background: #ffffff; border-radius: 22px; display: flex; align-items: center; gap: 22px; padding: 0 34px; color: var(--ink); font-size: 46px; font-weight: 700; letter-spacing: -0.01em; }
+  .search svg { width: 44px; height: 44px; flex: none; stroke: var(--ink); stroke-width: 3.2; fill: none; stroke-linecap: round; }
+  .search .caret { display: inline-block; width: 4px; height: 1em; margin-left: 3px; background: var(--ink); vertical-align: -0.12em; animation: blink 0.9s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .result { position: absolute; left: 124px; top: 540px; font-size: 56px; font-weight: 900; letter-spacing: -0.02em; color: var(--voice); }
+  .result small { display: block; margin-top: 10px; font-size: 28px; font-weight: 600; letter-spacing: 0; color: var(--muted); }
+  .stream { position: absolute; left: 1040px; top: 96px; width: 780px; height: 890px; overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); }
+  .stream ul { margin: 0; padding: 0; list-style: none; animation: scroll 22s linear infinite; }
+  .stream li { display: grid; grid-template-columns: 150px 170px 1fr; align-items: center; height: 74px; border-bottom: 1px solid var(--line); font-size: 27px; }
+  .stream .t { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .stream .u { color: var(--soft); font-weight: 600; }
+  .stream .e { font-weight: 800; }
+  @keyframes scroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+
+  /* 3: 80% funkcija se retko ili nikad ne koristi */
+  #b3 .big { top: 230px; }
+  #b3 .body { top: 540px; }
+  .tiles { position: absolute; left: 1020px; top: 330px; display: grid; grid-template-columns: repeat(10, 64px); gap: 16px; }
+  .tiles i { width: 64px; height: 64px; border-radius: 14px; background: var(--text); border: 3px solid var(--text); }
+  .tiles i.off { background: transparent; border: 3px dashed var(--line); }
+  .tiles-legend { position: absolute; left: 1020px; top: 760px; font-size: 26px; font-weight: 600; color: var(--muted); display: flex; gap: 36px; }
+  .tiles-legend span::before { content: ""; display: inline-block; width: 20px; height: 20px; border-radius: 5px; margin-right: 10px; vertical-align: -3px; background: var(--text); }
+  .tiles-legend span.n::before { background: transparent; border: 3px dashed var(--line); }
+
+  /* 4: šta, a ne zašto */
+  .line { position: absolute; left: 0; right: 0; text-align: center; font-size: 96px; font-weight: 900; letter-spacing: -0.035em; line-height: 1.05; }
+  .l1 { top: 360px; }
+  .l2 { top: 510px; }
+  .mark { display: inline-block; width: 0.62em; height: 0.62em; margin-left: 0.28em; vertical-align: 0.02em; fill: var(--voice); opacity: 0; }
+
+  .progress { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); display: flex; gap: 14px; opacity: 0.55; }
+  .progress i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .progress i.on { background: var(--text); }
+  .static .progress { display: none; }
+  .static .stream ul { animation: none; }
+</style>
+</head>
+<body>
+<div id="stage" role="region" aria-label="The problem">
+  <section class="beat" id="b1" aria-label="84 percent">
+    <div class="big"><span id="n1">84</span>%</div>
+    <p class="body">of product teams can't say why most of their users leave.</p>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <div class="legend" aria-hidden="true"><span class="k">Can't say why</span><span>Can</span></div>
+    <div class="source">Survey of 200 US product managers, 2021</div>
+  </section>
+
+  <section class="beat" id="b2" aria-label="Data on every click">
+    <h2>Data on every click.</h2>
+    <div class="search" aria-label="Search: Why did users leave?">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+      <span><span id="q"></span><span class="caret"></span></span>
+    </div>
+    <div class="result" id="result">0 results<small>across 1,284,902 tracked events</small></div>
+    <div class="stream" aria-hidden="true"><ul id="events"></ul></div>
+  </section>
+
+  <section class="beat" id="b3" aria-label="80 percent">
+    <div class="big"><span id="n3">80</span>%</div>
+    <p class="body">of features are rarely or never used.</p>
+    <div class="tiles" id="tiles" aria-hidden="true"></div>
+    <div class="tiles-legend" aria-hidden="true"><span>Used</span><span class="n">Rarely or never</span></div>
+    <div class="source">Pendo, 615 software products</div>
+  </section>
+
+  <section class="beat" id="b4" aria-label="Analytics tell you what, not why">
+    <div class="line l1">Analytics tell you what users do.</div>
+    <div class="line l2">They don't tell you <span class="why">why</span>.<svg class="mark" id="mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="7" r="3.1"/><circle cx="18.5" cy="7" r="3.1"/><circle cx="12" cy="18" r="3.1"/></svg></div>
+  </section>
+
+  <div class="progress" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+</div>
+
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const STATIC = params.get("static") === "1";
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const QUICK = STATIC || RM;
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const stage = document.getElementById("stage");
+  const $ = (id) => document.getElementById(id);
+  if (STATIC) stage.classList.add("static");
+
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // ---- sadržaj ----
+  // 16 timova koji znaju ostaju prazni; 84 koji ne znaju svetle.
+  const KNOW = new Set([3, 12, 17, 26, 31, 38, 44, 49, 55, 62, 67, 73, 78, 84, 91, 96]);
+  const LIT = [...Array(100).keys()].filter((i) => !KNOW.has(i));
+  for (let i = 0; i < 100; i++) $("dots").appendChild(document.createElement("i"));
+  const USED = [1, 6, 9, 14, 22, 27, 33, 38, 41, 47];
+  for (let i = 0; i < 50; i++) $("tiles").appendChild(document.createElement("i"));
+
+  const users = ["ana.j", "marko.p", "jelena.m", "u_4821", "nikola.s", "u_0193", "sara.t", "u_7740"];
+  const acts = ["clicked “Sign”", "opened Nalaz.pdf", "used Search", "exported text", "filled a form", "viewed Pricing",
+    "clicked “AI summary”", "closed the tab", "opened Ugovor.pdf", "clicked “Compare”", "used Redact", "scrolled 3 pages"];
+  const rows = [];
+  for (let k = 0; k < 14; k++) {
+    const s = 7 + k * 3;
+    rows.push(`<li><span class="t">09:41:${String(s).padStart(2, "0")}</span><span class="u">${users[k % users.length]}</span><span class="e">${acts[(k * 5) % acts.length]}</span></li>`);
+  }
+  $("events").innerHTML = rows.join("") + rows.join("");
+
+  // ---- animacije po koraku ----
+  const d = (ms) => (QUICK ? 0 : ms);
+  const anims = [];
+  const A = (el, kf, opt) => { const a = el.animate(kf, { fill: "both", easing: EASE, ...opt, duration: QUICK ? 1 : opt.duration, delay: d(opt.delay || 0) }); anims.push(a); return a; };
+  const rise = (el, delay = 0, dur = 650) => A(el, [{ opacity: 0, transform: "translateY(26px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: dur, delay });
+  const timers = [], rafs = [];
+  const later = (ms, fn) => { if (QUICK) fn(); else timers.push(setTimeout(fn, ms)); };
+
+  function count(el, to, ms, delay = 0) {
+    if (QUICK) { el.textContent = to; return; }
+    el.textContent = "0";
+    later(delay, () => {
+      const t0 = performance.now();
+      const tick = (t) => {
+        const p = Math.min(1, (t - t0) / ms);
+        el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) rafs.push(requestAnimationFrame(tick));
+      };
+      rafs.push(requestAnimationFrame(tick));
+    });
+  }
+
+  const enter = [
+    function beat1(b) {
+      const dots = [...$("dots").children];
+      dots.forEach((el) => el.classList.remove("lit"));
+      rise(b.querySelector(".big"), 0, 700);
+      count($("n1"), 84, 1100, 150);
+      rise(b.querySelector(".body"), 250);
+      dots.forEach((el, i) => A(el, [{ opacity: 0, transform: "scale(0.4)" }, { opacity: 1, transform: "scale(1)" }], { duration: 380, delay: 300 + i * 7 }));
+      LIT.forEach((idx, k) => later(1300 + k * 16, () => {
+        const el = dots[idx];
+        el.classList.add("lit");
+        if (!QUICK) el.animate([{ transform: "scale(1.5)" }, { transform: "scale(1)" }], { duration: 420, easing: EASE });
+      }));
+      rise(b.querySelector(".legend"), 2600);
+      rise(b.querySelector(".source"), 2700);
+    },
+    function beat2(b) {
+      rise(b.querySelector("h2"), 0);
+      A(b.querySelector(".stream"), [{ opacity: 0 }, { opacity: 1 }], { duration: 900, delay: 100 });
+      rise(b.querySelector(".search"), 450);
+      const q = $("q"), text = "Why did users leave?";
+      q.textContent = "";
+      $("result").style.opacity = "0";
+      if (QUICK) { q.textContent = text; $("result").style.opacity = "1"; return; }
+      [...text].forEach((ch, i) => later(1000 + i * 60, () => { q.textContent += ch; }));
+      later(1000 + text.length * 60 + 650, () => {
+        $("result").style.opacity = "";
+        A($("result"), [{ opacity: 0, transform: "translateY(10px) scale(0.96)" }, { opacity: 1, transform: "translateY(0) scale(1)" }], { duration: 420 });
+      });
+    },
+    function beat3(b) {
+      const tiles = [...$("tiles").children];
+      tiles.forEach((el) => el.classList.remove("off"));
+      rise(b.querySelector(".big"), 0, 700);
+      count($("n3"), 80, 1100, 150);
+      rise(b.querySelector(".body"), 250);
+      tiles.forEach((el, i) => A(el, [{ opacity: 0, transform: "scale(0.5)" }, { opacity: 1, transform: "scale(1)" }], { duration: 360, delay: 300 + i * 10 }));
+      const unused = tiles.map((_, i) => i).filter((i) => !USED.includes(i));
+      unused.forEach((idx, k) => later(1300 + k * 28, () => tiles[idx].classList.add("off")));
+      rise(b.querySelector(".tiles-legend"), 2600);
+      rise(b.querySelector(".source"), 2700);
+    },
+    function beat4(b) {
+      rise(b.querySelector(".l1"), 0, 750);
+      // Pauza dok voditelj izgovori prvu rečenicu.
+      rise(b.querySelector(".l2"), 2000, 750);
+      A($("mark"), [{ opacity: 0, transform: "translateX(-14px)" }, { opacity: 1, transform: "translateX(0)" }], { duration: 700, delay: 3200 });
+    },
+  ];
+
+  const beats = [...document.querySelectorAll(".beat")];
+  const dotsNav = [...document.querySelectorAll(".progress i")];
+  let cur = -1;
+
+  function stop() {
+    anims.splice(0).forEach((a) => a.cancel());
+    timers.splice(0).forEach(clearTimeout);
+    rafs.splice(0).forEach(cancelAnimationFrame);
+  }
+
+  function go(n) {
+    // Posle poslednjeg koraka: sledeći slajd („Dve opcije“).
+    if (n > beats.length - 1) { location.href = "options.html"; return; }
+    n = Math.max(0, Math.min(beats.length - 1, n));
+    if (n === cur) return;
+    stop();
+    const prev = beats[cur];
+    if (prev) {
+      prev.animate([{ opacity: 1 }, { opacity: 0 }], { duration: QUICK ? 1 : 220, fill: "forwards" }).finished
+        .then(() => { if (beats[cur] !== prev) prev.classList.remove("on"); }).catch(() => {});
+    }
+    cur = n;
+    const b = beats[n];
+    b.getAnimations().forEach((a) => a.cancel());
+    b.classList.add("on");
+    b.style.opacity = "1";
+    enter[n](b);
+    dotsNav.forEach((el, i) => el.classList.toggle("on", i === n));
+  }
+
+  addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); go(cur + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) {
+      e.preventDefault();
+      // Sa prvog koraka nazad na naslovnu karticu (kraj animacije).
+      if (cur === 0) location.href = "board-scene.html?start=title"; else go(cur - 1);
+    }
+    else if (k === "Home") go(0);
+    else if (/^[1-4]$/.test(k)) go(Number(k) - 1);
+  });
+  stage.addEventListener("click", () => go(cur + 1));
+
+  const start = Math.max(1, Math.min(4, Number(params.get("beat")) || 1)) - 1;
+  go(start);
+})();
+</script>
+</body>
+</html>

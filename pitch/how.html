@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Because · How it works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /*
+    Because · „Kako radi“, 5 koraka uz govor. Isti stil kao uvod.
+    1: istraživač koji intervjuiše svakog korisnika. 2: PostHog. 3: grupe po ponašanju (prave brojke iz seed-a).
+    4: intervju (prava rečenica iz simulacije). 5: odgovor nazad u PostHog (ai_main_reason).
+    Napred: →, Space, PageDown, Enter, klik. Nazad: ←, PageUp. 1–5: skok. ?beat=3, ?static=1 (za PNG).
+    Sa prvog koraka ← vodi na „Dve opcije“ (korak 3).
+  */
+  :root {
+    --font: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+    --deep: #10353c;
+    --text: #f3f7f7;
+    --soft: #a9c3c6;
+    --muted: #8fb0b4;
+    --line: rgba(243, 247, 247, 0.22);
+    --panel: rgba(243, 247, 247, 0.05);
+    --voice: #e5572f;
+    --ink: #13252a;
+    --hoodie: #1c4f58;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #071a1e; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 50% 50%; background: var(--deep); color: var(--text); font-family: var(--font); cursor: pointer; }
+  [data-in] { visibility: hidden; opacity: 0; }
+  [data-in].shown { visibility: visible; opacity: 1; }
+
+  /* ---- 1: istraživač ∵ ---- */
+  .mascot { position: absolute; left: 90px; top: 210px; width: 560px; height: 870px; }
+  .m-torso { position: absolute; left: 70px; top: 540px; width: 420px; height: 420px; border-radius: 210px 210px 0 0; background: var(--hoodie); }
+  .m-head { position: absolute; left: 125px; top: 250px; width: 310px; height: 310px; border-radius: 50%; background: #ffffff; border: 10px solid var(--ink); }
+  .m-dot { position: absolute; width: 52px; height: 52px; border-radius: 50%; background: var(--voice); }
+  .m-dot.e1 { left: 64px; top: 98px; } .m-dot.e2 { left: 174px; top: 98px; } .m-dot.m { left: 119px; top: 182px; }
+  .m-lens { position: absolute; top: 74px; width: 100px; height: 100px; border-radius: 50%; border: 12px solid var(--ink); }
+  .m-lens.a { left: 40px; } .m-lens.b { left: 150px; }
+  .m-bridge { position: absolute; left: 136px; top: 116px; width: 18px; height: 11px; background: var(--ink); }
+  .m-tape { position: absolute; left: 130px; top: 106px; width: 30px; height: 30px; border-radius: 4px; background: #ffffff; border: 4px solid var(--ink); transform: rotate(-8deg); }
+  .m-temple { position: absolute; top: 118px; width: 40px; height: 10px; background: var(--ink); }
+  .m-temple.a { left: 0; } .m-temple.b { left: 250px; }
+  .m-why { position: absolute; left: 380px; top: 130px; padding: 18px 30px; border-radius: 30px; background: #ffffff; color: var(--voice); font-size: 72px; font-weight: 900; letter-spacing: -0.03em; }
+  .m-why::after { content: ""; position: absolute; left: 34px; bottom: -16px; width: 32px; height: 32px; background: #ffffff; transform: rotate(45deg); }
+  .claim { position: absolute; left: 860px; top: 360px; width: 940px; margin: 0; font-size: 128px; font-weight: 900; letter-spacing: -0.035em; line-height: 1.04; text-wrap: balance; }
+  .claim em { font-style: normal; color: var(--voice); }
+
+  /* ---- 2–5: kako radi ---- */
+  h1 { position: absolute; left: 120px; top: 92px; margin: 0; font-size: 76px; font-weight: 900; letter-spacing: -0.035em; line-height: 1; }
+  .node { position: absolute; top: 236px; height: 560px; border-radius: 30px; background: var(--panel); border: 2px solid var(--line); padding: 40px 38px; }
+  .node h2 { margin: 0; font-size: 46px; font-weight: 900; letter-spacing: -0.03em; }
+  .node .sub { margin: 8px 0 0; font-size: 27px; font-weight: 600; color: var(--soft); }
+  #n1 { left: 120px; width: 500px; }
+  #n2 { left: 710px; width: 540px; }
+  #n3 { left: 1340px; width: 460px; }
+
+  .events { margin: 26px 0 0; padding: 0; list-style: none; }
+  /* Sadržaj kartica je izmišljen primer: prigušen, da ne vuče pažnju sa naslova i strelica. */
+  .events li { padding: 11px 0; border-bottom: 1px solid rgba(243, 247, 247, 0.12); font-size: 25px; font-weight: 600; color: rgba(243, 247, 247, 0.5); }
+  .events li span { color: rgba(243, 247, 247, 0.38); font-weight: 600; margin-right: 10px; }
+  .person { position: absolute; left: 38px; right: 38px; top: 330px; padding: 18px 20px; border-radius: 18px; background: rgba(243, 247, 247, 0.1); color: rgba(243, 247, 247, 0.6); }
+  .person b { font-size: 26px; font-weight: 900; }
+  .person .prop { margin-top: 8px; font-size: 28px; font-weight: 800; }
+  .person .prop code { display: block; margin-bottom: 4px; font-family: inherit; font-weight: 900; color: rgba(229, 87, 47, 0.8); }
+  .connect { position: absolute; left: 38px; bottom: 34px; }
+  .connect b { display: block; font-size: 30px; font-weight: 800; }
+  .connect span { font-size: 24px; font-weight: 600; color: var(--soft); }
+
+  .groups { margin-top: 26px; display: grid; gap: 16px; }
+  .group .row { display: flex; justify-content: space-between; font-size: 28px; font-weight: 700; color: rgba(243, 247, 247, 0.5); }
+  .group .row span { color: var(--soft); font-variant-numeric: tabular-nums; }
+  .group.hot .row { color: rgba(229, 87, 47, 0.75); }
+  .group .dots { display: flex; gap: 6px; margin-top: 10px; }
+  .group .dots i { width: 13px; height: 13px; border-radius: 50%; background: rgba(243, 247, 247, 0.32); }
+  .group.hot .dots i { background: rgba(229, 87, 47, 0.6); }
+
+  .chat { margin-top: 30px; display: grid; gap: 18px; }
+  .bubble { padding: 20px 24px; border-radius: 22px; font-size: 34px; font-weight: 700; line-height: 1.25; }
+  .bubble.ai { background: rgba(243, 247, 247, 0.1); color: rgba(243, 247, 247, 0.6); border-bottom-left-radius: 6px; margin-right: 26px; }
+  .bubble.ai small { display: block; margin-bottom: 6px; font-size: 20px; font-weight: 800; color: rgba(243, 247, 247, 0.42); }
+  .bubble.user { background: transparent; box-shadow: inset 0 0 0 3px rgba(229, 87, 47, 0.6); color: rgba(243, 247, 247, 0.62); border-bottom-right-radius: 6px; margin-left: 46px; font-weight: 800; }
+
+  .arrow { position: absolute; top: 488px; width: 90px; height: 56px; }
+  .arrow path { fill: none; stroke: var(--soft); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+  #a1 { left: 620px; } #a2 { left: 1250px; }
+  .loop { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; }
+  .loop path { fill: none; stroke: var(--voice); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+  .loop-label { position: absolute; left: 0; right: 0; top: 900px; text-align: center; font-size: 30px; font-weight: 800; color: var(--text); }
+  .loop-label code { font-family: inherit; color: var(--voice); }
+
+  .progress { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; gap: 14px; opacity: 0.55; }
+  .progress i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .progress i.on { background: var(--text); }
+  .static .progress { display: none; }
+</style>
+</head>
+<body>
+<div id="stage" role="region" aria-label="How Because works">
+  <!-- Korak 1 -->
+  <div class="mascot" data-in="1" data-out="2" aria-hidden="true">
+    <div class="m-torso"></div>
+    <div class="m-head">
+      <span class="m-dot e1"></span><span class="m-dot e2"></span><span class="m-dot m"></span>
+      <span class="m-temple a"></span><span class="m-temple b"></span>
+      <span class="m-lens a"></span><span class="m-lens b"></span>
+      <span class="m-bridge"></span><span class="m-tape"></span>
+    </div>
+    <div class="m-why" id="why">Why?</div>
+  </div>
+  <p class="claim" data-in="1" data-out="2" data-delay="250">Interviews <em>every</em> user.</p>
+
+  <!-- Koraci 2–5 -->
+  <h1 data-in="2">How it works</h1>
+
+  <section class="node" id="n1" data-in="2" aria-label="PostHog">
+    <h2>PostHog</h2>
+    <ul class="events">
+      <li><span>ana.j</span>clicked “Sign”</li>
+      <li><span>marko.p</span>used Search</li>
+      <li><span>jelena.m</span>tried “AI summary”</li>
+    </ul>
+    <div class="person" id="person"><b>jelena.m</b><div class="prop"><code>ai_main_reason</code>“made up an amount”</div></div>
+  </section>
+
+  <svg class="arrow" id="a1" data-in="3" viewBox="0 0 90 56" aria-hidden="true"><path d="M8 28 H78 M60 10 L80 28 L60 46"/></svg>
+  <section class="node" id="n2" data-in="3" aria-label="Groups by behavior">
+    <h2>Groups</h2>
+    <div class="groups" id="groups"></div>
+  </section>
+
+  <svg class="arrow" id="a2" data-in="4" viewBox="0 0 90 56" aria-hidden="true"><path d="M8 28 H78 M60 10 L80 28 L60 46"/></svg>
+  <section class="node" id="n3" data-in="4" aria-label="Interviews each user">
+    <h2>Interview</h2>
+    <div class="chat">
+      <div class="bubble ai" id="q"><small>∵ Because</small>You tried AI summary once. What happened?</div>
+      <div class="bubble user" id="a">It made up an amount.</div>
+    </div>
+  </section>
+
+  <svg class="loop" data-in="5" viewBox="0 0 1920 1080" aria-hidden="true">
+    <path id="loop" d="M1570 800 V870 Q1570 880 1560 880 H380 Q370 880 370 870 V810 M352 826 L370 804 L388 826"/>
+  </svg>
+  <div class="loop-label" data-in="5">Back to PostHog</div>
+
+  <div class="progress" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<script>
+(() => {
+  const PREV = "options.html?beat=3", NEXT = "depth.html";
+  const params = new URLSearchParams(location.search);
+  const STATIC = params.get("static") === "1";
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const QUICK = STATIC || RM;
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const STEPS = 5;
+  const stage = document.getElementById("stage");
+  const $ = (id) => document.getElementById(id);
+  if (STATIC) stage.classList.add("static");
+
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // Grupe iz našeg seed-a (lib/segments.ts): jedna tačka ≈ 3 osobe.
+  const GROUPS = [["Signers", 59], ["Readers", 43], ["Compliance", 58], ["Tried AI, then quit", 21, true], ["New & inactive", 19]];
+  $("groups").innerHTML = GROUPS.map(([name, n, hot]) =>
+    `<div class="group${hot ? " hot" : ""}"><div class="row">${name}</div><div class="dots">${"<i></i>".repeat(Math.round(n / 3))}</div></div>`).join("");
+
+  // ---- motor koraka ----
+  const anims = [], timers = [];
+  const A = (el, kf, opt) => { const a = el.animate(kf, { fill: "both", easing: EASE, ...opt, duration: QUICK ? 1 : opt.duration, delay: QUICK ? 0 : opt.delay || 0 }); anims.push(a); return a; };
+  const rise = (el, delay = 0, dur = 650) => A(el, [{ opacity: 0, transform: "translateY(24px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: dur, delay });
+  const later = (ms, fn) => { if (QUICK) fn(); else timers.push(setTimeout(fn, ms)); };
+  const stopAll = () => { anims.splice(0).forEach((a) => a.cancel()); timers.splice(0).forEach(clearTimeout); };
+  const show = (id, on) => { $(id).style.opacity = on ? "1" : "0"; };
+
+  const loop = $("loop");
+  const loopLen = loop.getTotalLength();
+  loop.style.strokeDasharray = `${loopLen}`;
+
+  const hooks = {
+    1: {
+      reset() { show("why", false); },
+      final() { show("why", true); },
+      enter() { show("why", false); later(900, () => { show("why", true); A($("why"), [{ opacity: 0, transform: "scale(0.6) translateY(20px)" }, { opacity: 1, transform: "scale(1) translateY(0)" }], { duration: 480 }); }); },
+    },
+    2: { reset() {}, final() {}, enter() {} },
+    3: {
+      groups: () => [...document.querySelectorAll(".group")],
+      reset() { this.groups().forEach((g) => { g.style.opacity = "0"; }); },
+      final() { this.groups().forEach((g) => { g.style.opacity = "1"; }); },
+      enter() {
+        this.groups().forEach((g, k) => {
+          g.style.opacity = "1";
+          rise(g, 350 + k * 220, 520);
+          [...g.querySelectorAll(".dots i")].forEach((d, i) => A(d, [{ opacity: 0, transform: "scale(0.3)" }, { opacity: 1, transform: "scale(1)" }], { duration: 260, delay: 450 + k * 220 + i * 22 }));
+        });
+      },
+    },
+    4: {
+      reset() { show("q", false); show("a", false); },
+      final() { show("q", true); show("a", true); },
+      enter() {
+        show("q", false); show("a", false);
+        later(450, () => { show("q", true); rise($("q"), 0, 520); });
+        later(1900, () => { show("a", true); rise($("a"), 0, 520); });
+      },
+    },
+    5: {
+      reset() { show("person", false); loop.style.strokeDashoffset = `${loopLen}`; },
+      final() { show("person", true); loop.style.strokeDashoffset = "0"; },
+      enter() {
+        show("person", false);
+        loop.style.strokeDashoffset = "0";
+        A(loop, [{ strokeDashoffset: loopLen }, { strokeDashoffset: 0 }], { duration: 1200, easing: "cubic-bezier(0.65, 0, 0.35, 1)" });
+        later(1250, () => {
+          show("person", true);
+          A($("person"), [{ opacity: 0, transform: "translateY(16px) scale(0.96)" }, { opacity: 1, transform: "translateY(0) scale(1)" }], { duration: 520 });
+          if (!QUICK) $("person").animate([{ boxShadow: "0 0 0 0 rgba(229,87,47,0.7)" }, { boxShadow: "0 0 0 22px rgba(229,87,47,0)" }], { duration: 900, delay: 300 });
+        });
+      },
+    },
+  };
+
+  const els = [...document.querySelectorAll("[data-in]")];
+  const nav = [...document.querySelectorAll(".progress i")];
+  let cur = 0;
+  function go(n) {
+    if (n < 1) { location.href = PREV; return; }
+    if (n > STEPS) { if (NEXT) location.href = NEXT; return; }
+    if (n === cur) return;
+    stopAll();
+    const forward = n > cur;
+    for (const el of els) {
+      const a = Number(el.dataset.in), b = el.dataset.out ? Number(el.dataset.out) : Infinity;
+      const vis = a <= n && n < b;
+      el.classList.toggle("shown", vis);
+      if (vis && a === n && forward && !QUICK) rise(el, Number(el.dataset.delay || 0));
+    }
+    for (let k = 1; k <= STEPS; k++) {
+      const h = hooks[k];
+      if (k < n || (k === n && (!forward || QUICK))) h.final();
+      else if (k === n) h.enter();
+      else h.reset();
+    }
+    cur = n;
+    nav.forEach((el, i) => el.classList.toggle("on", i === n - 1));
+  }
+
+  addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); go(cur + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); go(cur - 1); }
+    else if (k === "Home") { cur = 0; go(1); }
+    else if (/^[1-5]$/.test(k)) go(Number(k));
+  });
+  stage.addEventListener("click", () => go(cur + 1));
+  go(Math.max(1, Math.min(STEPS, Number(params.get("beat")) || 1)));
+})();
+</script>
+</body>
+</html>

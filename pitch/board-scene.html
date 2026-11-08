@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Because · Thursday board meeting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /*
+    Because · scena za pitch. Pozornica 1920×1080 se skalira na prozor (F11 za ceo ekran).
+    R ili klik na „Ponovo“: pusti ponovo. ?endcard=0: bez završne kartice. ?speed=1: sporije (podrazumevano 2.2 puta brže od prvobitne).
+    ?start=title: odmah gotova naslovna kartica (za slajd ili PNG); posle toga R pušta celu animaciju.
+    Zvuk (sfx.js): mrmljanje likova, prelet kamere, „ting“, akord na naslovnoj. M: utišaj/uključi. ?sound=0: bez zvuka.
+    Animacija uvek stoji na prvom kadru dok ne pritisneš Space (ili R); klik i strelice je ne pokreću. Tek tada kreće, sa zvukom.
+    Tokom animacije Space ne radi ništa (da dupli pritisak ne preskoči), → preskače na naslovnu karticu.
+    ← / Home / PageUp: nazad na prvi kadar, zaustavljeno (ako je slučajno krenula).
+    ?autostart=1: kreni odmah (bez zvuka ako pregledač ne dozvoli), npr. za snimanje.
+    Kadrovi: 1) CEO pokazuje graf na platnu, 2) tim i teorije, 3) kamera do nas.
+    Boje: mastilo i tirkiz iz Because-a; crvena (glas) samo za naš znak ∵, tamnocrvena za problem na grafu.
+  */
+  :root {
+    --font: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+    --ink: #13252a;
+    --ink-soft: #4c6066;
+    --deep: #10353c;
+    --deep-2: #0b272c;
+    --wall: #e9f0f0;
+    --wall-line: #d6e1e1;
+    --voice: #e5572f;
+    --alarm: #b42318;
+    --paper: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #071a1e; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 50% 50%; background: var(--wall); font-family: var(--font); color: var(--ink); }
+  #world { position: absolute; left: 0; top: 0; width: 3800px; height: 1080px; transform-origin: 0 0; }
+
+  /* Soba */
+  .wall-band { position: absolute; left: 0; right: 0; top: 0; height: 760px; background: var(--wall); }
+  .wall-band::after { content: ""; position: absolute; left: 0; right: 0; top: 604px; height: 2px; background: var(--wall-line); }
+  .floor { position: absolute; left: 0; right: 0; top: 760px; bottom: 0; background: #c9d6d6; }
+  .table { position: absolute; left: 70px; width: 3660px; top: 742px; height: 64px; border-radius: 18px 18px 6px 6px; background: var(--deep); z-index: 5; }
+  .table-front { position: absolute; left: 110px; width: 3660px; top: 800px; height: 280px; background: var(--deep-2); z-index: 5; }
+
+  /* Platno sa grafom: problem koji CEO prezentuje */
+  .screen-case { position: absolute; left: 62px; top: 44px; width: 716px; height: 26px; border-radius: 13px; background: var(--ink); }
+  .screen { position: absolute; left: 80px; top: 62px; width: 680px; height: 430px; background: var(--paper); border: 6px solid var(--ink); border-top: 0; border-radius: 0 0 10px 10px; padding: 34px 40px; }
+  .screen h3 { margin: 0; font-size: 36px; font-weight: 900; letter-spacing: -0.02em; }
+  .screen p { margin: 6px 0 26px; font-size: 21px; font-weight: 600; color: var(--ink-soft); }
+  .chart { display: grid; grid-template-columns: 180px 1fr 74px; gap: 16px 16px; align-items: center; font-size: 24px; font-weight: 700; }
+  .chart .track { height: 28px; background: #e3ebeb; border-radius: 6px; overflow: hidden; }
+  .chart .fill { display: block; height: 100%; width: var(--w); background: #6b8a92; border-radius: 6px; }
+  .chart .val { text-align: right; font-weight: 800; }
+  .chart .bad { color: var(--alarm); font-weight: 900; }
+  .chart .fill.bad { background: var(--alarm); }
+
+  .clock { position: absolute; left: 2460px; top: 190px; width: 130px; height: 130px; border-radius: 50%; background: var(--paper); border: 8px solid var(--ink); }
+  .clock i { position: absolute; left: 50%; top: 50%; width: 8px; margin-left: -4px; background: var(--ink); border-radius: 4px; transform-origin: 50% 100%; }
+  .clock i.h { height: 32px; margin-top: -32px; transform: rotate(60deg); }
+  .clock i.m { height: 44px; margin-top: -44px; transform: rotate(-30deg); }
+
+  /* Likovi: glava je natpis, telo je košulja */
+  .person { position: absolute; top: 0; width: 240px; height: 900px; margin-left: -120px; z-index: 3; }
+  .person.standing { top: -64px; }
+  .torso { position: absolute; left: 10px; top: 540px; width: 220px; height: 320px; border-radius: 110px 110px 36px 36px; background: var(--shirt); }
+  .head { position: absolute; left: 35px; top: 366px; width: 170px; height: 170px; border-radius: 50%; background: var(--paper); border: 6px solid var(--ink); display: grid; place-items: center; font-weight: 900; font-size: 46px; letter-spacing: -0.02em; transform-origin: 50% 85%; z-index: 2; }
+  .head.small-label { font-size: 38px; }
+  .arm { position: absolute; top: 572px; width: 50px; height: 196px; border-radius: 25px; background: var(--sleeve); transform-origin: 25px 25px; z-index: 1; }
+  .arm.l { left: -6px; transform: rotate(16deg); }
+  .arm.r { right: -6px; transform: rotate(-16deg); }
+  .hand { position: absolute; left: -2px; top: 160px; width: 54px; height: 54px; border-radius: 50%; background: var(--paper); border: 5px solid var(--ink); }
+  /* Šaka „☝“: kažiprst uz ivicu prema glavi, savijeni prsti i palac preko dlana. Crta se uspravno
+     (kontra-rotacija ruke), pa se pojavi tek kad je ruka gore. */
+  .point { position: absolute; left: -18px; top: -63px; width: 80px; height: 120px; transform-origin: 40px 85px; transform: rotate(-172deg); opacity: 0; overflow: visible; }
+  .point .skin { fill: var(--paper); stroke: var(--ink); stroke-width: 4.5; stroke-linejoin: round; }
+  .point .crease { fill: none; stroke: var(--ink); stroke-width: 3.5; stroke-linecap: round; }
+  .ceo .torso::before { content: ""; position: absolute; left: 70px; top: 0; width: 80px; height: 120px; background: var(--paper); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  .ceo .torso::after { content: ""; position: absolute; left: 100px; top: 18px; width: 20px; height: 112px; background: var(--ink); clip-path: polygon(20% 0, 80% 0, 100% 80%, 50% 100%, 0 80%); }
+
+  /* Mi: glava je znak ∵, naočare na gornje dve tačke */
+  .dot { position: absolute; width: 30px; height: 30px; border-radius: 50%; background: var(--voice); }
+  .dot.e1 { left: 37px; top: 51px; } .dot.e2 { left: 93px; top: 51px; } .dot.m { left: 65px; top: 104px; }
+  .glasses { position: absolute; left: 0; top: 0; width: 158px; height: 158px; pointer-events: none; }
+  .lens { position: absolute; top: 37px; width: 56px; height: 56px; border-radius: 50%; border: 7px solid var(--ink); overflow: hidden; }
+  .lens.a { left: 24px; } .lens.b { left: 80px; }
+  .lens::after { content: ""; position: absolute; top: -20px; left: -40px; width: 14px; height: 100px; background: rgba(255, 255, 255, 0.95); transform: rotate(28deg) translateX(var(--glint, -30px)); }
+  .bridge { position: absolute; left: 74px; top: 58px; width: 12px; height: 7px; background: var(--ink); }
+  .tape { position: absolute; left: 70px; top: 52px; width: 20px; height: 20px; background: var(--paper); border: 3px solid var(--ink); border-radius: 3px; transform: rotate(-8deg); }
+  .tape::after { content: ""; position: absolute; left: 3px; right: 3px; top: 6px; height: 2px; background: var(--ink); box-shadow: 0 5px 0 var(--ink); }
+  .temple { position: absolute; top: 60px; width: 22px; height: 6px; background: var(--ink); }
+  .temple.a { left: 4px; } .temple.b { left: 132px; }
+  .laptop { position: absolute; left: 50px; top: 646px; width: 140px; height: 98px; background: var(--ink); border-radius: 10px 10px 2px 2px; z-index: 4; }
+  .laptop i { position: absolute; width: 13px; height: 13px; border-radius: 50%; background: var(--voice); }
+  .laptop i:nth-child(1) { left: 50px; top: 34px; } .laptop i:nth-child(2) { left: 77px; top: 34px; } .laptop i:nth-child(3) { left: 63.5px; top: 56px; }
+
+  /* Oblačići */
+  .bubble { position: absolute; z-index: 10; width: max-content; max-width: 520px; padding: 18px 24px; background: var(--paper); border: 5px solid var(--ink); border-radius: 26px; font-size: 34px; font-weight: 700; line-height: 1.18; letter-spacing: -0.01em; transform-origin: var(--ox, 50%) 100%; }
+  .bubble::after { content: ""; position: absolute; left: var(--tail, 50%); bottom: -19px; width: 30px; height: 30px; background: var(--paper); border-right: 5px solid var(--ink); border-bottom: 5px solid var(--ink); transform: translateX(-50%) rotate(45deg); }
+  .bubble.wide { max-width: 480px; }
+  .bubble.shout { font-size: 40px; font-weight: 900; padding: 14px 22px; max-width: none; white-space: nowrap; }
+  .bubble.punch { max-width: none; white-space: nowrap; font-size: 64px; font-weight: 900; padding: 24px 36px; border-width: 6px; border-radius: 32px; }
+  .caret { display: inline-block; width: 5px; height: 0.9em; margin-left: 4px; background: var(--ink); vertical-align: -0.08em; animation: blink 0.9s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .slug { position: absolute; right: 64px; top: 52px; z-index: 20; font-size: 30px; font-weight: 800; letter-spacing: -0.01em; color: var(--ink); background: var(--paper); border: 4px solid var(--ink); border-radius: 999px; padding: 12px 24px; opacity: 0; }
+
+  /* Kraj animacije = naslovna kartica prezentacije. Znak ostaje tačno na mestu, a podaci
+     (tiši od znaka) se pojave oko njega. ?start=title prikazuje gotovu karticu odmah. */
+  #endcard { position: absolute; inset: 0; z-index: 30; background: var(--deep); opacity: 0; pointer-events: none; color: #f3f7f7; }
+  #endcard .lockup { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 40px; }
+  #endcard svg { width: 170px; height: 170px; fill: var(--voice); }
+  #endcard .word { font-size: 190px; font-weight: 900; letter-spacing: -0.045em; color: #f3f7f7; line-height: 1; }
+  #endcard .info { opacity: 0; }
+  #endcard .tagline { position: absolute; left: 0; right: 0; top: 684px; margin: 0; text-align: center; font-size: 42px; font-weight: 600; letter-spacing: -0.01em; color: #a9c3c6; }
+  #endcard .team { position: absolute; left: 96px; bottom: 86px; }
+  #endcard .team span { display: block; margin-bottom: 6px; font-size: 26px; font-weight: 700; color: #8fb0b4; }
+  #endcard .team strong { font-size: 56px; font-weight: 900; letter-spacing: -0.03em; color: #f3f7f7; }
+  #endcard .members { position: absolute; right: 96px; bottom: 90px; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: auto auto; gap: 12px 60px; text-align: right; font-size: 32px; font-weight: 700; color: #d5e3e4; }
+  #endcard .event { position: absolute; right: 96px; top: 78px; font-size: 26px; font-weight: 700; color: #8fb0b4; }
+
+  #replay { position: absolute; left: 36px; top: 30px; z-index: 40; font: 700 22px/1 var(--font); color: #f3f7f7; background: rgba(0, 0, 0, 0.35); border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 999px; padding: 12px 20px; cursor: pointer; opacity: 0; transition: opacity 200ms ease-out; }
+  #replay:hover { opacity: 1; }
+  #replay:focus-visible { outline: 3px solid var(--voice); outline-offset: 3px; opacity: 1; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="world">
+    <div class="wall-band"></div>
+    <div class="floor"></div>
+
+    <div class="screen-case" aria-hidden="true"></div>
+    <div class="screen" role="img" aria-label="Feature usage: Search 89%, Sign 65%, Redact 64%, Fill form 62%, AI summary 6%">
+      <h3>Feature usage</h3>
+      <p>Users using it regularly, last 30 days</p>
+      <div class="chart">
+        <span>Search</span><span class="track"><span class="fill" style="--w:89%"></span></span><span class="val">89%</span>
+        <span>Sign</span><span class="track"><span class="fill" style="--w:65%"></span></span><span class="val">65%</span>
+        <span>Redact</span><span class="track"><span class="fill" style="--w:64%"></span></span><span class="val">64%</span>
+        <span>Fill form</span><span class="track"><span class="fill" style="--w:62%"></span></span><span class="val">62%</span>
+        <span class="bad">AI summary</span><span class="track"><span class="fill bad" style="--w:6%"></span></span><span class="val bad">6%</span>
+      </div>
+    </div>
+
+    <div class="clock" aria-hidden="true"><i class="h"></i><i class="m"></i></div>
+
+    <div class="person ceo standing" id="ceo" style="left:880px; --shirt:#2b2f31; --sleeve:#24282a">
+      <div class="torso"></div>
+      <div class="arm l"><div class="hand"></div></div>
+      <div class="arm r"><div class="hand"></div></div>
+      <div class="head">CEO</div>
+    </div>
+    <div class="person" id="pm" style="left:1300px; --shirt:#6b8a92; --sleeve:#5d7a82">
+      <div class="torso"></div>
+      <div class="arm l"><div class="hand"></div></div>
+      <div class="arm r"><div class="hand"></div></div>
+      <div class="head">PM</div>
+    </div>
+    <div class="person" id="cto" style="left:1700px; --shirt:#7d8466; --sleeve:#6d7458">
+      <div class="torso"></div>
+      <div class="arm l"><div class="hand"></div></div>
+      <div class="arm r"><div class="hand"></div></div>
+      <div class="head">CTO</div>
+    </div>
+    <div class="person" id="sales" style="left:2100px; --shirt:#a5774f; --sleeve:#946a45">
+      <div class="torso"></div>
+      <div class="arm l"><div class="hand"></div></div>
+      <div class="arm r"><div class="hand"></div></div>
+      <div class="head small-label">SALES</div>
+    </div>
+    <div class="person us" id="us" style="left:3000px; --shirt:#1c4f58; --sleeve:#174249">
+      <div class="torso"></div>
+      <div class="arm l" id="us-arm"><div class="hand" id="us-hand">
+        <svg class="point" id="us-point" viewBox="0 0 64 96" aria-hidden="true">
+          <rect class="skin" x="35" y="3" width="19" height="56" rx="9.5"/>
+          <rect class="skin" x="6" y="40" width="50" height="52" rx="18"/>
+          <path class="crease" d="M9 55 H34 M9 68 H34 M11 80 H33"/>
+          <rect class="skin" x="27" y="60" width="32" height="18" rx="9" transform="rotate(-14 43 69)"/>
+        </svg>
+      </div></div>
+      <div class="arm r"><div class="hand"></div></div>
+      <div class="head" aria-label="Because">
+        <span class="dot e1"></span><span class="dot e2"></span><span class="dot m"></span>
+        <div class="glasses">
+          <span class="temple a"></span><span class="temple b"></span>
+          <span class="lens a" id="lens-a"></span><span class="lens b" id="lens-b"></span>
+          <span class="bridge"></span><span class="tape"></span>
+        </div>
+      </div>
+      <div class="laptop" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
+
+    <div class="table"></div>
+    <div class="table-front"></div>
+  </div>
+
+  <div class="slug" id="slug">Thursday · Board meeting</div>
+
+  <div id="endcard">
+    <div class="lockup">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="7" r="3.1"/><circle cx="18.5" cy="7" r="3.1"/><circle cx="12" cy="18" r="3.1"/></svg>
+      <b class="word">because</b>
+    </div>
+    <p class="tagline info">Asks users why, about what they actually did.</p>
+    <div class="team info"><span>Team</span><strong>Chunk Loader</strong></div>
+    <ul class="members info" aria-label="Team members">
+      <li>Milica Gojak</li><li>Lena Perišić</li><li>Ljubica Mihailović</li><li>Andrej Čolić</li>
+    </ul>
+    <div class="event info">Garaža Frontier Hackathon 2026</div>
+  </div>
+  <button id="replay" type="button">Ponovo (R)</button>
+</div>
+
+<script src="sfx.js"></script>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const SPEED = Math.max(0.1, Number(params.get("speed")) || 2.2);
+  const ENDCARD = params.get("endcard") !== "0";
+  const SOUND = params.get("sound") !== "0" && !!window.SFX;
+  const sfx = window.SFX || { talk() {}, hum() {}, pop() {}, whoosh() {}, ting() {}, tick() {}, chime() {}, stopAll() {}, unlock() {}, setMuted() {}, canAutoplay: () => false, muted: true };
+  if (!SOUND) sfx.setMuted(true);
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const CAM = "cubic-bezier(0.65, 0, 0.35, 1)";
+  const stage = document.getElementById("stage");
+  const world = document.getElementById("world");
+  const $ = (id) => document.getElementById(id);
+
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  let run = 0;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms / SPEED));
+  const dur = (ms) => (RM ? 1 : ms / SPEED);
+
+  // Položaj glave lika u koordinatama sveta (za oblačiće).
+  function anchor(id) {
+    const p = $(id);
+    const x = parseFloat(p.style.left);
+    const top = p.classList.contains("standing") ? 366 - 64 : 366;
+    return { x, top };
+  }
+
+  function say(id, text, { cls = "", dx = 0, dy = 0, tail = "50%", quiet = false } = {}) {
+    const { x, top } = anchor(id);
+    const b = document.createElement("div");
+    b.className = "bubble " + cls;
+    b.textContent = text;
+    b.style.setProperty("--tail", tail);
+    b.style.setProperty("--ox", tail);
+    world.appendChild(b);
+    const w = b.offsetWidth, h = b.offsetHeight;
+    const tailPx = tail.endsWith("%") ? (parseFloat(tail) / 100) * w : parseFloat(tail);
+    b.style.left = x - tailPx + dx + "px";
+    b.style.top = top - h - 34 + dy + "px";
+    b.animate(
+      [{ opacity: 0, transform: "scale(0.6) translateY(16px)" }, { opacity: 1, transform: "scale(1) translateY(0)" }],
+      { duration: dur(320), easing: EASE, fill: "both" });
+    const shout = cls.includes("shout");
+    sfx.pop(shout ? 0.6 : 1);
+    if (text && !quiet) sfx.talk(id, text, { shout, speed: SPEED });
+    return b;
+  }
+
+  function pop(b, ms = 220) {
+    if (!b) return;
+    b.animate([{ opacity: 1, transform: "scale(1)" }, { opacity: 0, transform: "scale(0.85)" }],
+      { duration: dur(ms), easing: "ease-in", fill: "forwards" }).finished.then(() => b.remove()).catch(() => {});
+  }
+
+  function bob(id, times = 6, amp = 14, delay = 0) {
+    if (RM) return;
+    $(id).animate([{ transform: "translateY(0)" }, { transform: `translateY(-${amp}px)` }, { transform: "translateY(0)" }],
+      { duration: 260 / SPEED, iterations: times, delay: delay / SPEED, easing: "ease-in-out" });
+  }
+
+  function flail(id, delay = 0) {
+    if (RM) return;
+    const [l, r] = $(id).querySelectorAll(".arm");
+    l.animate([{ transform: "rotate(16deg)" }, { transform: "rotate(120deg)" }, { transform: "rotate(40deg)" }, { transform: "rotate(130deg)" }, { transform: "rotate(16deg)" }],
+      { duration: 1100 / SPEED, delay: delay / SPEED, easing: "ease-in-out" });
+    r.animate([{ transform: "rotate(-16deg)" }, { transform: "rotate(-70deg)" }, { transform: "rotate(-130deg)" }, { transform: "rotate(-50deg)" }, { transform: "rotate(-16deg)" }],
+      { duration: 1100 / SPEED, delay: (delay + 80) / SPEED, easing: "ease-in-out" });
+  }
+
+  function gesture(id) {
+    if (RM) return;
+    const r = $(id).querySelector(".arm.r");
+    r.animate([{ transform: "rotate(-16deg)" }, { transform: "rotate(-95deg)" }, { transform: "rotate(-80deg)" }, { transform: "rotate(-16deg)" }],
+      { duration: 1300 / SPEED, easing: "ease-in-out" });
+  }
+
+  function camera(from, to, ms) {
+    const t = (c) => `translate(${c[0]}px, ${c[1]}px) scale(${c[2]})`;
+    sfx.whoosh(ms / SPEED, ms > 1500 ? 0.8 : 0.5);
+    return world.animate([{ transform: t(from) }, { transform: t(to) }], { duration: dur(ms), easing: CAM, fill: "forwards" }).finished.catch(() => {});
+  }
+
+  function reset() {
+    sfx.stopAll();
+    document.getAnimations().forEach((a) => a.cancel());
+    world.querySelectorAll(".bubble").forEach((b) => b.remove());
+    $("replay").classList.remove("show");
+  }
+
+  async function play() {
+    const id = ++run;
+    reset();
+    const alive = () => id === run;
+    const WIDE = [0, 0, 1];
+    const TEAM = [-530, 0, 1];
+    const s = 1.35;
+    const US = [960 - 3000 * s, 500 - 470 * s, s];
+
+    // Kadar 1: CEO pokazuje graf i postavlja pitanje. Natpis sastanka stoji sve vreme.
+    $("slug").animate([{ opacity: 0 }, { opacity: 1, offset: 0.05 }, { opacity: 1, offset: 0.93 }, { opacity: 0 }],
+      { duration: dur(7000), fill: "forwards" });
+    await sleep(500); if (!alive()) return;
+    const ceoArm = $("ceo").querySelector(".arm.l");
+    ceoArm.animate([{ transform: "rotate(16deg)" }, { transform: "rotate(100deg)" }], { duration: dur(500), easing: EASE, fill: "forwards" });
+    const c1 = say("ceo", "Nobody uses AI summary.", { tail: "30%" });
+    await sleep(2200); if (!alive()) return;
+    pop(c1);
+    await sleep(220); if (!alive()) return;
+    const c2 = say("ceo", "Why?", { tail: "30%" });
+    await sleep(1600); if (!alive()) return;
+    pop(c2);
+    ceoArm.animate([{ transform: "rotate(100deg)" }, { transform: "rotate(16deg)" }], { duration: dur(500), easing: EASE, fill: "forwards" });
+
+    // Kadar 2: tim, svako sa svojom teorijom.
+    await camera(WIDE, TEAM, 1000);
+    if (!alive()) return;
+    gesture("pm");
+    const b2 = say("pm", "The button is hidden.");
+    await sleep(1500); if (!alive()) return;
+    gesture("cto");
+    const b3 = say("cto", "They don't trust AI.");
+    await sleep(1500); if (!alive()) return;
+    gesture("sales");
+    const b4 = say("sales", "The model is weak.");
+    await sleep(1500); if (!alive()) return;
+
+    // Svađa: svi u glas.
+    [b2, b3, b4].forEach((b) => pop(b, 180));
+    await sleep(200); if (!alive()) return;
+    bob("pm", 7, 16, 0); bob("cto", 7, 12, 90); bob("sales", 7, 18, 40);
+    flail("pm", 0); flail("cto", 120); flail("sales", 60);
+    const shouts = [];
+    shouts.push(say("pm", "Redesign!", { cls: "shout", dy: 10 }));
+    await sleep(260); if (!alive()) return;
+    shouts.push(say("sales", "Bigger model!", { cls: "shout", dy: 30 }));
+    await sleep(240); if (!alive()) return;
+    shouts.push(say("cto", "Onboarding!", { cls: "shout", dy: 0 }));
+    await sleep(420); if (!alive()) return;
+    shouts.push(say("pm", "It's the button!", { cls: "shout", dy: -90, dx: 10 }));
+    await sleep(260); if (!alive()) return;
+    shouts.push(say("cto", "It's trust!", { cls: "shout", dy: -100, dx: 20 }));
+    await sleep(240); if (!alive()) return;
+    shouts.push(say("sales", "It's the model!", { cls: "shout", dy: -90, dx: 10 }));
+    await sleep(500); if (!alive()) return;
+    if (!RM) $("ceo").querySelector(".head").animate(
+      [{ transform: "rotate(0)" }, { transform: "rotate(-9deg)" }, { transform: "rotate(9deg)" }, { transform: "rotate(-7deg)" }, { transform: "rotate(0)" }],
+      { duration: 900 / SPEED, easing: "ease-in-out" });
+    shouts.forEach((b) => pop(b, 160));
+    await sleep(700); if (!alive()) return;
+
+    // Kadar 3: tišina, kamera niz sto, do nas.
+    await camera(TEAM, US, 1900);
+    if (!alive()) return;
+    await sleep(450); if (!alive()) return;
+
+    // Odsjaj na naočarima, pa kažiprst gore.
+    sfx.ting();
+    for (const lens of [$("lens-a"), $("lens-b")]) {
+      lens.animate([{ "--glint": "-30px" }, { "--glint": "120px" }], { duration: dur(520), easing: "ease-out" });
+    }
+    if (!RM) {
+      document.querySelector(".us .glasses").animate([{ transform: "translateY(0)" }, { transform: "translateY(-6px)" }, { transform: "translateY(0)" }],
+        { duration: 520 / SPEED, easing: EASE });
+    }
+    await sleep(600); if (!alive()) return;
+    $("us-arm").animate([{ transform: "rotate(16deg)" }, { transform: "rotate(172deg)" }], { duration: dur(520), easing: EASE, fill: "forwards" });
+    // Kad je ruka gore: okrugla šaka se zameni šakom sa kažiprstom.
+    $("us-point").animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur(140), delay: dur(470), fill: "forwards" });
+    setTimeout(() => { if (alive()) sfx.tick(); }, 470 / SPEED);
+    $("us-hand").animate([{ backgroundColor: "#ffffff", borderColor: "#13252a" }, { backgroundColor: "rgba(255,255,255,0)", borderColor: "rgba(19,37,42,0)" }],
+      { duration: dur(140), delay: dur(470), fill: "forwards" });
+    await sleep(700); if (!alive()) return;
+
+    // „Erm... actually... it's“, slovo po slovo; posle „it's“ naslovna kartica kaže „because“.
+    // Oblačić se prvo izmeri sa celom rečenicom (da stane iznad glave), pa se isprazni i kuca.
+    const FULL = "Erm... actually... it's";
+    const punch = say("us", FULL, { cls: "punch", tail: "30%", dy: 0, quiet: true });
+    punch.style.width = punch.offsetWidth + 14 + "px";
+    punch.textContent = "";
+    const text = document.createElement("span");
+    const caret = document.createElement("span");
+    caret.className = "caret";
+    punch.append(text, caret);
+    const type = async (str, ms) => { for (const ch of str) { if (!alive()) return; text.textContent += ch; await sleep(RM ? 0 : ms); } };
+    sfx.hum("us", 650 / SPEED);
+    await type("Erm", 190);
+    await type("...", 200);
+    await sleep(450);
+    sfx.talk("us", "actually", { rate: 200, speed: SPEED });
+    await type(" actually", 75);
+    await type("...", 200);
+    await sleep(350);
+    sfx.talk("us", "it's", { rate: 170, speed: SPEED });
+    await type(" it's", 80);
+    if (!alive()) return;
+    await sleep(ENDCARD ? 550 : 2200); if (!alive()) return;
+
+    if (ENDCARD) {
+      // Kraj animacije, pa iz njega naslovna kartica: podaci se pojave oko znaka koji stoji u mestu.
+      sfx.chime();
+      await $("endcard").animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur(320), easing: "ease-out", fill: "forwards" }).finished.catch(() => {});
+      if (!alive()) return;
+      await sleep(1100); if (!alive()) return;
+      document.querySelectorAll("#endcard .info").forEach((el, i) => el.animate(
+        [{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "translateY(0)" }],
+        { duration: dur(600), delay: dur(i * 170), easing: EASE, fill: "forwards" }));
+      onTitle = true;
+    }
+
+  }
+
+  // ?start=title: gotova naslovna kartica odmah (za slajd ili snimak); R pušta celu animaciju.
+  let showTitleFirst = params.get("start") === "title";
+  let onTitle = false;
+  function showTitle() {
+    $("endcard").style.opacity = "1";
+    document.querySelectorAll("#endcard .info").forEach((el) => { el.style.opacity = "1"; });
+    onTitle = true;
+  }
+  const playOrTitle = () => {
+    if (showTitleFirst) { showTitleFirst = false; reset(); showTitle(); return; }
+    onTitle = false;
+    $("endcard").style.opacity = "";
+    document.querySelectorAll("#endcard .info").forEach((el) => { el.style.opacity = ""; });
+    play();
+  };
+
+  $("replay").addEventListener("click", playOrTitle);
+  // Čekanje na prvom kadru: kreće SAMO na Space (ili R). Klik, strelice i ostalo ne pokreću ništa,
+  // da animacija ne krene slučajno dok se čeka početak prezentacije.
+  let waiting = false;
+  const begin = () => { waiting = false; playOrTitle(); };
+  // ← / Home / PageUp: nazad na prvi kadar, zaustavljeno, spremno za Space.
+  const hold = () => {
+    run++; reset(); onTitle = false; showTitleFirst = false;
+    $("endcard").style.opacity = "";
+    document.querySelectorAll("#endcard .info").forEach((el) => { el.style.opacity = ""; });
+    waiting = true;
+  };
+  addEventListener("pointerdown", () => sfx.unlock());
+  // Daljinski: napred tokom animacije preskače na naslovnu karticu, a sa naslovne ide na sledeći slajd.
+  addEventListener("keydown", (e) => {
+    sfx.unlock();
+    if (e.key === "m" || e.key === "M") { sfx.setMuted(!sfx.muted); return; }
+    if (waiting) {
+      if ([" ", "r", "R"].includes(e.key) && !e.repeat) { e.preventDefault(); begin(); }
+      else if ([" ", "ArrowRight", "ArrowDown", "PageDown", "Enter", "ArrowLeft", "PageUp", "Home"].includes(e.key)) e.preventDefault();
+      return;
+    }
+    if (["ArrowLeft", "PageUp", "Home"].includes(e.key)) { e.preventDefault(); hold(); return; }
+    if (e.key === "r" || e.key === "R") { playOrTitle(); return; }
+    if (e.key === " " && !onTitle) { e.preventDefault(); return; }
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(e.key)) {
+      e.preventDefault();
+      if (onTitle) location.href = "intro.html";
+      else { run++; reset(); showTitle(); }
+    }
+  });
+  // Registrovano svojstvo da bi se odsjaj animirao glatko (gde je podržano).
+  if (window.CSS && CSS.registerProperty) {
+    try { CSS.registerProperty({ name: "--glint", syntax: "<length>", inherits: true, initialValue: "-30px" }); } catch (e) {}
+  }
+  // Kreće tek na Space (osim ?start=title i ?autostart=1).
+  if (showTitleFirst || params.get("autostart") === "1") playOrTitle();
+  else waiting = true;
+})();
+</script>
+</body>
+</html>

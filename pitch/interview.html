@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Because · The interview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /*
+    Because · „Intervju“, posle demoa uživo (rezime, ili rezerva ako demo zakaže). 3 koraka uz govor.
+    1: ne pita „How satisfied are you?“ nego pitanje iz pravog korišćenja.
+    2: svaka činjenica iz pitanja je događaj iz PostHoga (feature_used: sign, fill_form, ai_summary).
+    3: odgovor je na profilu u PostHogu (ai_segment, ai_main_reason), spreman za kohortu.
+    Napred: →, Space, PageDown, Enter, klik. Nazad: ←, PageUp. 1–3: skok. ?beat=2, ?static=1 (za PNG).
+  */
+  :root {
+    --font: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+    --deep: #10353c;
+    --text: #f3f7f7;
+    --soft: #a9c3c6;
+    --muted: #8fb0b4;
+    --line: rgba(243, 247, 247, 0.22);
+    --panel: rgba(243, 247, 247, 0.05);
+    --voice: #e5572f;
+    --ink: #13252a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #071a1e; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 50% 50%; background: var(--deep); color: var(--text); font-family: var(--font); cursor: pointer; }
+  [data-in] { visibility: hidden; opacity: 0; }
+  [data-in].shown { visibility: visible; opacity: 1; }
+
+  /* 1: anketno pitanje, precrtano */
+  .not { position: absolute; left: 120px; top: 100px; margin: 0; font-size: 60px; font-weight: 800; letter-spacing: -0.02em; color: var(--muted); }
+  .not span { position: relative; }
+  .not span::after { content: ""; position: absolute; left: -6px; right: -6px; top: 52%; height: 8px; border-radius: 4px; background: var(--voice); transform-origin: left center; transform: scaleX(var(--strike, 1)); }
+
+  /* pitanje iz pravog korišćenja */
+  .ask { position: absolute; left: 120px; top: 226px; width: 1160px; padding: 40px 50px 46px; border-radius: 34px; border-bottom-left-radius: 8px; background: #ffffff; color: var(--ink); }
+  .ask small { display: block; margin-bottom: 12px; font-size: 26px; font-weight: 800; color: #4c6066; }
+  .ask small b { color: var(--voice); }
+  .ask p { margin: 0; font-size: 58px; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; text-wrap: pretty; }
+  .ask mark { background: transparent; color: inherit; border-radius: 8px; transition: background 400ms, box-shadow 400ms; }
+  .ask mark.on { background: rgba(229, 87, 47, 0.16); box-shadow: inset 0 -6px 0 var(--voice); }
+
+  /* 2: činjenice = događaji */
+  .from { position: absolute; left: 120px; top: 624px; font-size: 28px; font-weight: 800; color: var(--soft); }
+  .events { position: absolute; left: 120px; top: 684px; width: 1160px; display: flex; justify-content: space-between; }
+  .ev { width: 340px; padding: 22px 28px; border-radius: 22px; border: 2px solid var(--line); background: var(--panel); }
+  .ev code { display: block; font-family: inherit; font-size: 40px; font-weight: 900; color: var(--text); }
+  .ev span { font-size: 28px; font-weight: 700; color: var(--soft); }
+  .ev.zero span { color: var(--voice); font-weight: 800; }
+
+  /* 3: profil u PostHogu */
+  .profile { position: absolute; left: 1370px; top: 226px; width: 430px; padding: 34px 36px; border-radius: 30px; background: var(--panel); border: 2px solid var(--line); }
+  .profile small { display: block; font-size: 26px; font-weight: 800; color: var(--soft); }
+  .profile h2 { margin: 6px 0 0; font-size: 44px; font-weight: 900; letter-spacing: -0.02em; }
+  .props { margin: 26px 0 0; display: grid; gap: 18px; }
+  .prop { padding-top: 16px; border-top: 1px solid var(--line); }
+  .prop code { display: block; font-family: inherit; font-size: 26px; font-weight: 900; color: var(--voice); }
+  .prop span { font-size: 34px; font-weight: 800; line-height: 1.2; }
+  .cohort { position: absolute; left: 1370px; top: 684px; width: 430px; padding: 22px 28px; border-radius: 22px; background: #ffffff; color: var(--ink); display: flex; align-items: center; gap: 18px; }
+  .cohort i { flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--voice); display: grid; place-items: center; }
+  .cohort svg { width: 28px; height: 28px; fill: none; stroke: #ffffff; stroke-width: 4; stroke-linecap: round; }
+  .cohort b { font-size: 36px; font-weight: 900; letter-spacing: -0.015em; }
+
+  .progress { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; gap: 14px; opacity: 0.55; }
+  .progress i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .progress i.on { background: var(--text); }
+  .static .progress { display: none; }
+  .static .ask mark { transition: none; }
+</style>
+</head>
+<body>
+<div id="stage" role="region" aria-label="The interview asks about what you actually did">
+  <p class="not" data-in="1" aria-label="Not: How satisfied are you?"><span id="not">“How satisfied are you?”</span></p>
+
+  <section class="ask" data-in="1" id="ask" aria-label="The real interview question">
+    <small><b>∵ Because</b> · to folio_doctor, Signers</small>
+    <p>You <mark>signed a report</mark> and <mark>filled in a referral</mark> today, but you've <mark>never opened the AI&nbsp;summary</mark>. Why?</p>
+  </section>
+
+  <div class="from" data-in="2">From PostHog events</div>
+  <div class="events" data-in="2" aria-label="Events in PostHog">
+    <div class="ev"><code>sign</code><span>today</span></div>
+    <div class="ev"><code>fill_form</code><span>today</span></div>
+    <div class="ev zero"><code>ai_summary</code><span>never</span></div>
+  </div>
+
+  <section class="profile" data-in="3" aria-label="Person profile in PostHog">
+    <small>PostHog person</small>
+    <h2>folio_doctor</h2>
+    <div class="props">
+      <div class="prop"><code>ai_segment</code><span>signers</span></div>
+      <div class="prop"><code>ai_main_reason</code><span>“Reads every report anyway”</span></div>
+    </div>
+  </section>
+  <div class="cohort" data-in="3" data-delay="700"><i><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></i><b>Build a cohort</b></div>
+
+  <div class="progress" aria-hidden="true"><i></i><i></i><i></i></div>
+</div>
+
+<script>
+(() => {
+  const PREV = "gets.html?beat=4", NEXT = "matter.html";
+  const params = new URLSearchParams(location.search);
+  const STATIC = params.get("static") === "1";
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const QUICK = STATIC || RM;
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const STEPS = 3;
+  const stage = document.getElementById("stage");
+  const $ = (id) => document.getElementById(id);
+  if (STATIC) stage.classList.add("static");
+
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // ---- motor koraka ----
+  const anims = [], timers = [];
+  const A = (el, kf, opt) => { const a = el.animate(kf, { fill: "both", easing: EASE, ...opt, duration: QUICK ? 1 : opt.duration, delay: QUICK ? 0 : opt.delay || 0 }); anims.push(a); return a; };
+  const rise = (el, delay = 0, dur = 650) => A(el, [{ opacity: 0, transform: "translateY(24px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: dur, delay });
+  const later = (ms, fn) => { if (QUICK) fn(); else timers.push(setTimeout(fn, ms)); };
+  const stopAll = () => { anims.splice(0).forEach((a) => a.cancel()); timers.splice(0).forEach(clearTimeout); };
+
+  const marks = () => [...document.querySelectorAll(".ask mark")];
+  const evs = () => [...document.querySelectorAll(".ev")];
+
+  const hooks = {
+    1: {
+      reset() {},
+      final() { $("not").style.setProperty("--strike", "1"); },
+      enter() {
+        $("not").style.setProperty("--strike", "0");
+        later(900, () => {
+          const s = $("not");
+          if (QUICK) { s.style.setProperty("--strike", "1"); return; }
+          const t0 = performance.now();
+          const tick = (t) => { const p = Math.min(1, (t - t0) / 450); s.style.setProperty("--strike", String(1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(tick); };
+          requestAnimationFrame(tick);
+        });
+        // Pitanje stiže tek kad je anketno precrtano.
+        A($("ask"), [{ opacity: 0, transform: "translateY(30px)" }, { opacity: 1, transform: "none" }], { duration: 650, delay: 1600 });
+      },
+    },
+    2: {
+      reset() { marks().forEach((m) => m.classList.remove("on")); },
+      final() { marks().forEach((m) => m.classList.add("on")); },
+      enter() {
+        // Činjenica i njen događaj pale se zajedno, jedan par za drugim.
+        marks().forEach((m, i) => { m.classList.remove("on"); later(400 + i * 700, () => m.classList.add("on")); });
+        evs().forEach((e, i) => rise(e, 400 + i * 700, 520));
+      },
+    },
+    3: {
+      reset() {},
+      final() {},
+      enter() { document.querySelectorAll(".prop").forEach((p, i) => rise(p, 500 + i * 300, 520)); },
+    },
+  };
+
+  const els = [...document.querySelectorAll("[data-in]")];
+  const nav = [...document.querySelectorAll(".progress i")];
+  let cur = 0;
+  function go(n) {
+    if (n < 1) { location.href = PREV; return; }
+    if (n > STEPS) { if (NEXT) location.href = NEXT; return; }
+    if (n === cur) return;
+    stopAll();
+    const forward = n > cur;
+    for (const el of els) {
+      const a = Number(el.dataset.in), b = el.dataset.out ? Number(el.dataset.out) : Infinity;
+      const v = a <= n && n < b;
+      el.classList.toggle("shown", v);
+      if (v && a === n && forward && !QUICK && el.id !== "ask") rise(el, Number(el.dataset.delay || 0));
+    }
+    for (let k = 1; k <= STEPS; k++) {
+      const h = hooks[k];
+      if (k < n || (k === n && (!forward || QUICK))) h.final();
+      else if (k === n) h.enter();
+      else h.reset();
+    }
+    cur = n;
+    nav.forEach((el, i) => el.classList.toggle("on", i === n - 1));
+  }
+
+  addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); go(cur + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); go(cur - 1); }
+    else if (k === "Home") { cur = 0; go(1); }
+    else if (/^[1-3]$/.test(k)) go(Number(k));
+  });
+  stage.addEventListener("click", () => go(cur + 1));
+  go(Math.max(1, Math.min(STEPS, Number(params.get("beat")) || 1)));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Because · Future work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /*
+    Because · „Future work“, 3 koraka uz govor. Tri kolone bez okvira: naslov + jedna slika.
+    1: sa svakim intervjuom bolje razume svaku grupu.
+    2: predviđa reakciju pre nego što se napravi (primer: potpisivanje u serijama, predlog sa „What you get“), potvrda sa par intervjua.
+    3: sa četa na glas.
+    Napred: →, Space, PageDown, Enter, klik. Nazad: ←, PageUp. 1–3: skok. ?beat=2, ?static=1 (za PNG).
+  */
+  :root {
+    --font: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+    --deep: #10353c;
+    --text: #f3f7f7;
+    --soft: #a9c3c6;
+    --line: rgba(243, 247, 247, 0.22);
+    --voice: #e5572f;
+    --ink: #13252a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #071a1e; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 50% 50%; background: var(--deep); color: var(--text); font-family: var(--font); cursor: pointer; }
+  [data-in] { visibility: hidden; opacity: 0; }
+  [data-in].shown { visibility: visible; opacity: 1; }
+
+  h1 { position: absolute; left: 120px; top: 92px; margin: 0; font-size: 76px; font-weight: 900; letter-spacing: -0.035em; line-height: 1; }
+  .col { position: absolute; top: 290px; width: 500px; }
+  #c1 { left: 120px; } #c2 { left: 710px; } #c3 { left: 1300px; }
+  .col h2 { margin: 0; height: 120px; font-size: 52px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.08; text-wrap: balance; }
+  .vis { margin-top: 50px; }
+
+  /* 1: razumevanje grupa raste */
+  .learn { display: grid; gap: 34px; }
+  .learn b { display: block; font-size: 34px; font-weight: 800; }
+  .learn .bar { margin-top: 12px; height: 18px; border-radius: 9px; background: var(--line); overflow: hidden; }
+  .learn .bar i { display: block; height: 100%; width: 100%; border-radius: 9px; background: var(--text); transform-origin: left center; }
+  .learn .hot .bar i { background: var(--voice); }
+
+  /* 2: predviđanje */
+  .feature { padding: 26px 30px; border-radius: 22px; border: 3px dashed var(--soft); }
+  .feature small { display: block; font-size: 26px; font-weight: 800; color: var(--soft); }
+  .feature b { display: block; margin-top: 4px; font-size: 46px; font-weight: 900; letter-spacing: -0.02em; }
+  .guess { margin: 34px 0 0; font-size: 40px; font-weight: 900; letter-spacing: -0.015em; color: var(--voice); }
+  .confirm { margin-top: 18px; display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 800; color: var(--soft); }
+  .confirm svg { flex: none; width: 34px; height: 34px; fill: none; stroke: var(--text); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* 3: glas */
+  .chat { display: inline-block; padding: 18px 26px; border-radius: 22px; border-bottom-left-radius: 6px; background: #ffffff; color: var(--ink); font-size: 34px; font-weight: 800; }
+  .wave { margin-top: 44px; height: 200px; display: flex; align-items: center; justify-content: space-between; }
+  .wave i { width: 11px; height: 100%; border-radius: 6px; background: var(--voice); transform-origin: center; transform: scaleY(var(--h)); }
+  .wave.live i { animation: talk 1100ms ease-in-out infinite alternate; animation-delay: var(--d); }
+  @keyframes talk { from { transform: scaleY(calc(var(--h) * 0.35)); } to { transform: scaleY(var(--h)); } }
+  @media (prefers-reduced-motion: reduce) { .wave.live i { animation: none; } }
+  .static .wave.live i { animation: none; }
+
+  .progress { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; gap: 14px; opacity: 0.55; }
+  .progress i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .progress i.on { background: var(--text); }
+  .static .progress { display: none; }
+</style>
+</head>
+<body>
+<div id="stage" role="region" aria-label="Future work">
+  <h1 data-in="1">Future work</h1>
+
+  <section class="col" id="c1" data-in="1" aria-label="Learns each group, with every interview">
+    <h2>Learns each group</h2>
+    <div class="vis learn" id="learn"></div>
+  </section>
+
+  <section class="col" id="c2" data-in="2" aria-label="Predicts reactions before you build">
+    <h2>Predicts before you build</h2>
+    <div class="vis">
+      <div class="feature"><small>Not built yet</small><b>Batch signing</b></div>
+      <p class="guess" id="guess">Signers would use it</p>
+      <div class="confirm" id="confirm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg>Confirmed by 5 interviews</div>
+    </div>
+  </section>
+
+  <section class="col" id="c3" data-in="3" aria-label="From chat to voice">
+    <h2>From chat to voice</h2>
+    <div class="vis">
+      <div class="chat" id="chat">What happened?</div>
+      <div class="wave" id="wave" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <div class="progress" aria-hidden="true"><i></i><i></i><i></i></div>
+</div>
+
+<script>
+(() => {
+  const PREV = "matter.html?beat=4", NEXT = "end.html";
+  const params = new URLSearchParams(location.search);
+  const STATIC = params.get("static") === "1";
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const QUICK = STATIC || RM;
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const STEPS = 3;
+  const stage = document.getElementById("stage");
+  const $ = (id) => document.getElementById(id);
+  if (STATIC) stage.classList.add("static");
+
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // ---- sadržaj ----
+  // Koliko dobro razumemo grupu (ilustracija, ne merenje).
+  const GROUPS = [["Signers", 0.86, true], ["Readers", 0.68], ["Compliance", 0.76]];
+  $("learn").innerHTML = GROUPS.map(([n, v, hot]) => `<div class="${hot ? "hot" : ""}"><b>${n}</b><div class="bar"><i style="transform:scaleX(${v})" data-v="${v}"></i></div></div>`).join("");
+  const H = [0.35, 0.6, 0.9, 0.55, 0.3, 0.75, 1, 0.65, 0.4, 0.85, 0.5, 0.95, 0.6, 0.3, 0.7, 0.9, 0.45, 0.65, 0.35, 0.8, 0.55, 0.25];
+  $("wave").innerHTML = H.map((h, i) => `<i style="--h:${h}; --d:${-(i * 137) % 1100}ms"></i>`).join("");
+
+  // ---- motor koraka ----
+  const anims = [];
+  const A = (el, kf, opt) => { const a = el.animate(kf, { fill: "both", easing: EASE, ...opt, duration: QUICK ? 1 : opt.duration, delay: QUICK ? 0 : opt.delay || 0 }); anims.push(a); return a; };
+  const rise = (el, delay = 0, dur = 650) => A(el, [{ opacity: 0, transform: "translateY(24px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: dur, delay });
+  const stopAll = () => { anims.splice(0).forEach((a) => a.cancel()); };
+
+  const hooks = {
+    1: {
+      reset() {},
+      final() {},
+      // Trake rastu: svaki intervju dopuni sliku grupe.
+      enter() { document.querySelectorAll(".learn .bar i").forEach((b, i) => A(b, [{ transform: "scaleX(0.04)" }, { transform: `scaleX(${b.dataset.v})` }], { duration: 2200, delay: 500 + i * 120 })); },
+    },
+    2: {
+      reset() {},
+      final() {},
+      enter() { rise($("guess"), 900, 560); rise($("confirm"), 1800, 560); },
+    },
+    3: {
+      reset() { $("wave").classList.remove("live"); },
+      final() { $("wave").classList.add("live"); },
+      enter() {
+        $("wave").classList.add("live");
+        // Poruka u četu „postaje“ glas.
+        A($("chat"), [{ opacity: 1, transform: "none" }, { opacity: 0.35, transform: "translateY(-6px)" }], { duration: 700, delay: 1200 });
+        [...$("wave").children].forEach((b, i) => A(b, [{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 600 + i * 40 }));
+      },
+    },
+  };
+
+  const els = [...document.querySelectorAll("[data-in]")];
+  const nav = [...document.querySelectorAll(".progress i")];
+  let cur = 0;
+  function go(n) {
+    if (n < 1) { location.href = PREV; return; }
+    if (n > STEPS) { if (NEXT) location.href = NEXT; return; }
+    if (n === cur) return;
+    stopAll();
+    const forward = n > cur;
+    for (const el of els) {
+      const a = Number(el.dataset.in), b = el.dataset.out ? Number(el.dataset.out) : Infinity;
+      const v = a <= n && n < b;
+      el.classList.toggle("shown", v);
+      if (v && a === n && forward && !QUICK) rise(el, Number(el.dataset.delay || 0));
+    }
+    for (let k = 1; k <= STEPS; k++) {
+      const h = hooks[k];
+      if (k < n || (k === n && (!forward || QUICK))) h.final();
+      else if (k === n) h.enter();
+      else h.reset();
+    }
+    cur = n;
+    nav.forEach((el, i) => el.classList.toggle("on", i === n - 1));
+  }
+
+  addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); go(cur + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); go(cur - 1); }
+    else if (k === "Home") { cur = 0; go(1); }
+    else if (/^[1-3]$/.test(k)) go(Number(k));
+  });
+  stage.addEventListener("click", () => go(cur + 1));
+  go(Math.max(1, Math.min(STEPS, Number(params.get("beat")) || 1)));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Because · What a product team gets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /*
+    Because · „Šta produkt tim dobije“, 4 koraka uz govor. Isti stil kao uvod.
+    1: grupa korisnika Signers (59 sličica ljudi; 5,6 potpisa i 4,0 formulara po osobi dnevno, AI sažetak 0 od 59).
+    2: „Why no AI summary?“, skraćeni citati iz simuliranih intervjua (data/results). 3: predlog. 4: demo uživo (bilo koja aplikacija, Folio u demu).
+    Napred: →, Space, PageDown, Enter, klik. Nazad: ←, PageUp. 1–4: skok. ?beat=2, ?static=1 (za PNG).
+    Sa prvog koraka ← vodi na „Kako radi“ (korak 5).
+  */
+  :root {
+    --font: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+    --deep: #10353c;
+    --text: #f3f7f7;
+    --soft: #a9c3c6;
+    --muted: #8fb0b4;
+    --line: rgba(243, 247, 247, 0.22);
+    --panel: rgba(243, 247, 247, 0.05);
+    --voice: #e5572f;
+    --ink: #13252a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #071a1e; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 50% 50%; background: var(--deep); color: var(--text); font-family: var(--font); cursor: pointer; }
+  [data-in] { visibility: hidden; opacity: 0; }
+  [data-in].shown { visibility: visible; opacity: 1; }
+  #content { position: absolute; inset: 0; transition: opacity 600ms cubic-bezier(0.22, 1, 0.36, 1), filter 600ms; }
+  #content.dim { opacity: 0.07; filter: blur(3px); }
+
+  h1 { position: absolute; left: 120px; top: 92px; margin: 0; font-size: 76px; font-weight: 900; letter-spacing: -0.035em; line-height: 1; }
+
+  /* 1: grupa */
+  .group { position: absolute; left: 120px; top: 236px; width: 700px; height: 724px; border-radius: 30px; background: var(--panel); border: 2px solid var(--line); padding: 44px; }
+  .group .kind { display: block; margin-bottom: 4px; font-size: 28px; font-weight: 800; color: var(--soft); }
+  .group .name { display: flex; align-items: center; gap: 20px; }
+  .group h2 { margin: 0; font-size: 72px; font-weight: 900; letter-spacing: -0.035em; }
+  .pill { display: inline-block; padding: 8px 18px; border-radius: 999px; border: 2px solid var(--line); font-size: 24px; font-weight: 800; color: var(--soft); white-space: nowrap; }
+  .pill.sim { border-style: dashed; }
+  /* 59 korisnika kao 59 sličica ljudi, da se vidi da je grupa = ljudi */
+  .crowd { margin-top: 28px; display: grid; grid-template-columns: repeat(15, 28px); gap: 8px; }
+  .crowd svg { display: block; width: 28px; height: 30px; fill: var(--text); }
+  .facts { margin-top: 40px; display: grid; gap: 20px; }
+  .fact { display: grid; grid-template-columns: 220px 1fr; align-items: baseline; gap: 18px; }
+  .fact b { font-size: 76px; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+  .fact span { font-size: 34px; font-weight: 700; color: var(--soft); line-height: 1.2; }
+  .fact.zero b { color: var(--voice); font-size: 60px; }
+
+  /* 2: zašto (pitanje istraživanja, odgovori iz intervjua) */
+  .why { position: absolute; left: 900px; top: 280px; width: 900px; }
+  .why .kind { display: block; margin-bottom: 4px; font-size: 28px; font-weight: 800; color: var(--soft); }
+  .why h3 { margin: 0; font-size: 72px; font-weight: 900; letter-spacing: -0.035em; line-height: 1.2; white-space: nowrap; }
+  .themes { margin-top: 30px; display: grid; gap: 18px; }
+  .theme { display: grid; grid-template-columns: 64px 1fr; gap: 24px; align-items: center; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .theme:last-child { border-bottom: 0; padding-bottom: 0; }
+  .av { width: 64px; height: 64px; border-radius: 50%; background: var(--text); display: grid; place-items: center; }
+  .av svg { width: 34px; height: 36px; margin-top: 8px; fill: var(--ink); }
+  .theme blockquote { margin: 0; font-size: 36px; font-weight: 700; line-height: 1.22; letter-spacing: -0.01em; text-wrap: balance; }
+
+  /* 3: predlog */
+  .fix { position: absolute; left: 900px; top: 770px; width: 900px; padding: 26px 32px; border-radius: 24px; background: #ffffff; color: var(--ink); }
+  .fix small { display: block; font-size: 24px; font-weight: 900; color: var(--voice); }
+  .fix p { margin: 6px 0 0; font-size: 44px; font-weight: 800; line-height: 1.22; letter-spacing: -0.01em; }
+
+  /* 4: demo uživo */
+  .live { position: absolute; left: 0; right: 0; top: 330px; text-align: center; }
+  .live h2 { margin: 0; font-size: 140px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; }
+  .flow { margin-top: 70px; display: flex; justify-content: center; align-items: center; gap: 26px; }
+  .step { min-width: 320px; padding: 26px 34px; border-radius: 26px; background: #ffffff; color: var(--ink); text-align: left; }
+  .step b { display: block; font-size: 48px; font-weight: 900; letter-spacing: -0.02em; }
+  .step span { font-size: 30px; font-weight: 700; color: #4c6066; }
+  .step code { font-family: inherit; font-weight: 900; color: var(--voice); }
+  /* „bilo koja aplikacija“: iza prve kartice još dve, kao špil */
+  .step.any { box-shadow: 16px -16px 0 -3px rgba(243, 247, 247, 0.4), 32px -32px 0 -6px rgba(243, 247, 247, 0.16); margin-right: 26px; }
+  .flow svg { width: 70px; height: 40px; }
+  .flow svg path { fill: none; stroke: var(--soft); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+
+  .progress { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; gap: 14px; opacity: 0.55; }
+  .progress i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .progress i.on { background: var(--text); }
+  .static .progress { display: none; }
+  .static #content { transition: none; }
+</style>
+</head>
+<body>
+<div id="stage" role="region" aria-label="What a product team gets">
+  <div id="content">
+    <h1 data-in="1">What you get</h1>
+
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="u" viewBox="0 0 24 26"><circle cx="12" cy="7" r="6.5"/><path d="M1 26 C1 18 5.5 15 12 15 C18.5 15 23 18 23 26 Z"/></symbol></svg>
+
+    <section class="group" data-in="1" aria-label="User group: Signers, 59 users">
+      <small class="kind">User group</small>
+      <div class="name"><h2>Signers</h2><span class="pill">59 users</span></div>
+      <div class="crowd" id="crowd" aria-hidden="true"></div>
+      <div class="facts">
+        <div class="fact"><b id="f1">5.6</b><span>signatures a day, each</span></div>
+        <div class="fact"><b id="f2">4.0</b><span>forms a day, each</span></div>
+        <div class="fact zero"><b>0 of 59</b><span>opened AI summary</span></div>
+      </div>
+    </section>
+
+    <section class="why" data-in="2" aria-label="Why no AI summary? Answers from interviews">
+      <small class="kind">Simulated interviews</small>
+      <h3>Why no AI summary?</h3>
+      <div class="themes" id="themes">
+        <div class="theme"><span class="av"><svg aria-hidden="true"><use href="#u"/></svg></span>
+          <blockquote>“I end up reading the whole thing anyway.”</blockquote></div>
+        <div class="theme"><span class="av"><svg aria-hidden="true"><use href="#u"/></svg></span>
+          <blockquote>“Scan on one side, form on the other. I retype everything.”</blockquote></div>
+        <div class="theme"><span class="av"><svg aria-hidden="true"><use href="#u"/></svg></span>
+          <blockquote>“Open, sign, save, close. Then the next one.”</blockquote></div>
+      </div>
+    </section>
+
+    <section class="fix" data-in="3" aria-label="Suggested fix">
+      <small>Suggested fix</small>
+      <p>Auto-fill forms from scans.<br>Sign in batches.</p>
+    </section>
+  </div>
+
+  <section class="live" data-in="4" aria-label="The live flow">
+    <h2>The live flow</h2>
+    <div class="flow">
+      <div class="step any"><b>Any app</b><span>Folio in this demo</span></div>
+      <svg viewBox="0 0 70 40" aria-hidden="true"><path d="M6 20 H60 M44 6 L62 20 L44 34"/></svg>
+      <div class="step"><b>Because</b><span>group, interview</span></div>
+      <svg viewBox="0 0 70 40" aria-hidden="true"><path d="M6 20 H60 M44 6 L62 20 L44 34"/></svg>
+      <div class="step"><b>PostHog</b><span><code>ai_main_reason</code></span></div>
+    </div>
+  </section>
+
+  <div class="progress" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+</div>
+
+<script>
+(() => {
+  const PREV = "depth.html?beat=3", NEXT = "interview.html";
+  const params = new URLSearchParams(location.search);
+  const STATIC = params.get("static") === "1";
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const QUICK = STATIC || RM;
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const STEPS = 4;
+  const stage = document.getElementById("stage");
+  const $ = (id) => document.getElementById(id);
+  if (STATIC) stage.classList.add("static");
+
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // ---- motor koraka ----
+  const anims = [], timers = [], rafs = [];
+  const A = (el, kf, opt) => { const a = el.animate(kf, { fill: "both", easing: EASE, ...opt, duration: QUICK ? 1 : opt.duration, delay: QUICK ? 0 : opt.delay || 0 }); anims.push(a); return a; };
+  const rise = (el, delay = 0, dur = 650) => A(el, [{ opacity: 0, transform: "translateY(24px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: dur, delay });
+  const later = (ms, fn) => { if (QUICK) fn(); else timers.push(setTimeout(fn, ms)); };
+  const stopAll = () => { anims.splice(0).forEach((a) => a.cancel()); timers.splice(0).forEach(clearTimeout); rafs.splice(0).forEach(cancelAnimationFrame); };
+
+  function count(el, to, ms, delay) {
+    const text = to.toFixed(1);
+    if (QUICK) { el.textContent = text; return; }
+    el.textContent = "0.0";
+    later(delay, () => {
+      const t0 = performance.now();
+      const tick = (t) => {
+        const p = Math.min(1, (t - t0) / ms);
+        el.textContent = (to * (1 - Math.pow(1 - p, 3))).toFixed(1);
+        if (p < 1) rafs.push(requestAnimationFrame(tick));
+      };
+      rafs.push(requestAnimationFrame(tick));
+    });
+  }
+
+  $("crowd").innerHTML = '<svg><use href="#u"/></svg>'.repeat(59);
+  const themes = () => [...document.querySelectorAll(".theme")];
+  const facts = () => [...document.querySelectorAll(".fact")];
+  const hooks = {
+    1: {
+      reset() {},
+      final() { $("f1").textContent = "5.6"; $("f2").textContent = "4.0"; },
+      enter() {
+        [...$("crowd").children].forEach((c, i) => A(c, [{ opacity: 0, transform: "scale(0.4)" }, { opacity: 1, transform: "scale(1)" }], { duration: 300, delay: 350 + i * 14 }));
+        facts().forEach((f, i) => rise(f, 1300 + i * 380, 600));
+        count($("f1"), 5.6, 900, 1400);
+        count($("f2"), 4.0, 900, 1780);
+      },
+    },
+    2: {
+      reset() {},
+      final() {},
+      enter() { themes().forEach((t, i) => rise(t, 400 + i * 650, 620)); },
+    },
+    3: { reset() {}, final() {}, enter() {} },
+    4: {
+      reset() { $("content").classList.remove("dim"); },
+      final() { $("content").classList.add("dim"); },
+      enter() {
+        $("content").classList.add("dim");
+        document.querySelectorAll(".flow > *").forEach((el, i) => rise(el, 400 + i * 160, 520));
+      },
+    },
+  };
+
+  const els = [...document.querySelectorAll("[data-in]")];
+  const nav = [...document.querySelectorAll(".progress i")];
+  let cur = 0;
+  function go(n) {
+    if (n < 1) { location.href = PREV; return; }
+    if (n > STEPS) { if (NEXT) location.href = NEXT; return; }
+    if (n === cur) return;
+    stopAll();
+    const forward = n > cur;
+    for (const el of els) {
+      const a = Number(el.dataset.in), b = el.dataset.out ? Number(el.dataset.out) : Infinity;
+      const vis = a <= n && n < b;
+      el.classList.toggle("shown", vis);
+      if (vis && a === n && forward && !QUICK) rise(el, Number(el.dataset.delay || 0));
+    }
+    for (let k = 1; k <= STEPS; k++) {
+      const h = hooks[k];
+      if (k < n || (k === n && (!forward || QUICK))) h.final();
+      else if (k === n) h.enter();
+      else h.reset();
+    }
+    cur = n;
+    nav.forEach((el, i) => el.classList.toggle("on", i === n - 1));
+  }
+
+  addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); go(cur + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); go(cur - 1); }
+    else if (k === "Home") { cur = 0; go(1); }
+    else if (/^[1-4]$/.test(k)) go(Number(k));
+  });
+  stage.addEventListener("click", () => go(cur + 1));
+  go(Math.max(1, Math.min(STEPS, Number(params.get("beat")) || 1)));
+})();
+</script>
+</body>
+</html>

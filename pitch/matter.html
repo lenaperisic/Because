@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Because · A guess vs. a decision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /*
+    Because · „Why does that matter?“, 4 koraka uz govor (posle demoa, pre „Future work“).
+    1: zamisli PDF alat za lekare: 3 meseca pravljenja AI sažetka, a lekari ga ne otvaraju (kontekst ostaje gore ceo slajd).
+    2: danas: nagađaš („možda ne mogu da ga nađu“) → tooltip.
+    3: sa Because-om: pravi razlog („ne verujem AI-ju sa medicinskim podacima“) → prikaži odakle je svaka rečenica.
+    4: „A guess vs. a decision.“ dole: tooltip precrtan, pravo rešenje štiklirano.
+    Napred: →, Space, PageDown, Enter, klik. Nazad: ←, PageUp. 1–4: skok. ?beat=2, ?static=1 (za PNG).
+  */
+  :root {
+    --font: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+    --deep: #10353c;
+    --text: #f3f7f7;
+    --soft: #a9c3c6;
+    --line: rgba(243, 247, 247, 0.22);
+    --voice: #e5572f;
+    --ink: #13252a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #071a1e; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; overflow: hidden; transform-origin: 50% 50%; background: var(--deep); color: var(--text); font-family: var(--font); cursor: pointer; }
+  [data-in] { visibility: hidden; opacity: 0; }
+  [data-in].shown { visibility: visible; opacity: 1; }
+
+  /* Kontekst (stoji ceo slajd): čiji je alat, na čemu je tim radio i šta se desilo.
+     Korak 1: na sredini ekrana, od koraka 2 klizne gore. */
+  .setup { position: absolute; left: 120px; top: 64px; transition: top 700ms cubic-bezier(0.22, 1, 0.36, 1); }
+  #stage.b1 .setup { top: 400px; }
+  .static .setup { transition: none; }
+  .setup small { display: block; font-size: 34px; font-weight: 800; color: var(--soft); }
+  .setup h1 { margin: 10px 0 0; font-size: 68px; font-weight: 900; letter-spacing: -0.035em; line-height: 1.08; }
+  .setup h1 em, .verdict em { font-style: normal; color: var(--voice); }
+  /* Korak 4: zaključak dole, kontekst ostaje gore. */
+  .verdict { position: absolute; left: 0; right: 0; top: 870px; margin: 0; text-align: center; font-size: 64px; font-weight: 900; letter-spacing: -0.03em; }
+
+  .col { position: absolute; top: 340px; width: 760px; transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1); }
+  #guess { left: 120px; } #know { left: 1040px; }
+  #stage .col.dim { opacity: 0.35; }
+  .static .col { transition: none; }
+  .kind { display: block; margin-bottom: 26px; font-size: 34px; font-weight: 800; color: var(--soft); }
+  #know .kind { color: var(--voice); }
+
+  /* misao (nagađanje) i izjava korisnika */
+  .think { min-height: 154px; display: inline-flex; align-items: center; padding: 28px 36px; border-radius: 30px; border: 4px dashed var(--soft); font-size: 48px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: var(--text); }
+  .quote { min-height: 154px; display: grid; grid-template-columns: 76px 1fr; gap: 24px; align-items: center; padding: 26px 32px; border-radius: 30px; border-bottom-left-radius: 8px; background: #ffffff; color: var(--ink); font-size: 46px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.12; }
+  .av { width: 76px; height: 76px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; }
+  .av svg { width: 40px; height: 42px; margin-top: 10px; fill: #ffffff; }
+
+  .down { display: block; width: 44px; height: 70px; margin: 22px 0 22px 40px; }
+  .down path { fill: none; stroke: var(--soft); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+  #know .down path { stroke: var(--voice); }
+
+  /* rešenje */
+  .fix { position: relative; display: inline-flex; align-items: center; gap: 20px; padding: 22px 30px; border-radius: 22px; font-size: 42px; font-weight: 900; letter-spacing: -0.02em; line-height: 1.12; }
+  #guess .fix { border: 3px solid var(--line); color: var(--text); }
+  #know .fix { background: var(--voice); color: #ffffff; max-width: 760px; }
+  .fix .strike { position: absolute; left: 18px; right: 18px; top: 50%; height: 7px; margin-top: -3px; border-radius: 4px; background: var(--voice); transform-origin: left center; transform: scaleX(0); }
+  .fix .ok { flex: none; width: 54px; height: 54px; border-radius: 50%; background: #ffffff; display: grid; place-items: center; transform: scale(0); }
+  .fix .ok svg { width: 30px; height: 30px; fill: none; stroke: var(--voice); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+
+  .progress { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; gap: 14px; opacity: 0.55; }
+  .progress i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .progress i.on { background: var(--text); }
+  .static .progress { display: none; }
+</style>
+</head>
+<body>
+<div id="stage" role="region" aria-label="Why it matters: a guess versus a decision">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="u" viewBox="0 0 24 26"><circle cx="12" cy="7" r="6.5"/><path d="M1 26 C1 18 5.5 15 12 15 C18.5 15 23 18 23 26 Z"/></symbol></svg>
+
+  <header class="setup" data-in="1">
+    <small>Imagine: you build a PDF tool for doctors</small>
+    <h1>3 months building AI summary.<br>Doctors <em>never</em> open it.</h1>
+  </header>
+  <p class="verdict" data-in="4">A guess vs. a <em>decision</em>.</p>
+
+  <section class="col" id="guess" data-in="2" aria-label="Today: you guess">
+    <span class="kind">Today: you guess</span>
+    <div class="think">Maybe they can't find it?</div>
+    <svg class="down" viewBox="0 0 44 70" aria-hidden="true"><path d="M22 6 V60 M8 46 L22 62 L36 46"/></svg>
+    <div class="fix" id="fixA">Add a tooltip<i class="strike" id="strike"></i></div>
+  </section>
+
+  <section class="col" id="know" data-in="3" aria-label="With Because: you know">
+    <span class="kind">With Because</span>
+    <div class="quote"><span class="av"><svg><use href="#u"/></svg></span>“I don't trust AI with medical data.”</div>
+    <svg class="down" viewBox="0 0 44 70" aria-hidden="true"><path d="M22 6 V60 M8 46 L22 62 L36 46"/></svg>
+    <div class="fix" id="fixB"><span class="ok" id="ok"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17 19 7"/></svg></span>Show where every sentence came from</div>
+  </section>
+
+  <div class="progress" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+</div>
+
+<script>
+(() => {
+  const PREV = "interview.html?beat=3", NEXT = "future.html";
+  const params = new URLSearchParams(location.search);
+  const STATIC = params.get("static") === "1";
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const QUICK = STATIC || RM;
+  const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const STEPS = 4;
+  const stage = document.getElementById("stage");
+  const $ = (id) => document.getElementById(id);
+  if (STATIC) stage.classList.add("static");
+
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // ---- motor koraka ----
+  const anims = [];
+  const A = (el, kf, opt) => { const a = el.animate(kf, { fill: "both", easing: EASE, ...opt, duration: QUICK ? 1 : opt.duration, delay: QUICK ? 0 : opt.delay || 0 }); anims.push(a); return a; };
+  const rise = (el, delay = 0, dur = 650) => A(el, [{ opacity: 0, transform: "translateY(24px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: dur, delay });
+  const stopAll = () => { anims.splice(0).forEach((a) => a.cancel()); };
+  const parts = (id) => [...$(id).querySelectorAll(".think, .quote, .down, .fix")];
+
+  const hooks = {
+    1: { reset() {}, final() {}, enter() {} },
+    2: { reset() {}, final() {}, enter() { parts("guess").forEach((p, i) => rise(p, 400 + i * 600, 560)); } },
+    3: { reset() {}, final() {}, enter() { parts("know").forEach((p, i) => rise(p, 400 + i * 700, 560)); } },
+    4: {
+      reset() { $("guess").classList.remove("dim"); $("strike").style.transform = ""; $("ok").style.transform = ""; },
+      final() { $("guess").classList.add("dim"); $("strike").style.transform = "scaleX(1)"; $("ok").style.transform = "scale(1)"; },
+      enter() {
+        $("guess").classList.add("dim");
+        $("strike").style.transform = "scaleX(1)";
+        $("ok").style.transform = "scale(1)";
+        A($("strike"), [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 500, delay: 400 });
+        A($("ok"), [{ transform: "scale(0)" }, { transform: "scale(1.15)", offset: 0.7 }, { transform: "scale(1)" }], { duration: 520, delay: 1000 });
+      },
+    },
+  };
+
+  const els = [...document.querySelectorAll("[data-in]")];
+  const nav = [...document.querySelectorAll(".progress i")];
+  let cur = 0;
+  function go(n) {
+    if (n < 1) { location.href = PREV; return; }
+    if (n > STEPS) { if (NEXT) location.href = NEXT; return; }
+    if (n === cur) return;
+    stopAll();
+    const forward = n > cur;
+    stage.classList.toggle("b1", n === 1);
+    for (const el of els) {
+      const a = Number(el.dataset.in), b = el.dataset.out ? Number(el.dataset.out) : Infinity;
+      const v = a <= n && n < b;
+      el.classList.toggle("shown", v);
+      if (v && a === n && forward && !QUICK) rise(el, Number(el.dataset.delay || 0));
+    }
+    for (let k = 1; k <= STEPS; k++) {
+      const h = hooks[k];
+      if (k < n || (k === n && (!forward || QUICK))) h.final();
+      else if (k === n) h.enter();
+      else h.reset();
+    }
+    cur = n;
+    nav.forEach((el, i) => el.classList.toggle("on", i === n - 1));
+  }
+
+  addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); go(cur + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); go(cur - 1); }
+    else if (k === "Home") { cur = 0; go(1); }
+    else if (/^[1-4]$/.test(k)) go(Number(k));
+  });
+  stage.addEventListener("click", () => go(cur + 1));
+  go(Math.max(1, Math.min(STEPS, Number(params.get("beat")) || 1)));
+})();
+</script>
+</body>
+</html>
