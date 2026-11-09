@@ -105,19 +105,4 @@ No PostHog keys? The app also runs on the local seed backup. See [`insights/READ
 - **Honest about simulation.** Simulated interviews are always labeled; real ones stand out.
 - **Consent first.** Every interview opens by asking whether the person wants to take part.
 
-## Built with
 
-Next.js · TypeScript · Claude (Anthropic SDK) · PostHog (HogQL query API + capture) · Java Swing · zod
-
-## Team: Chunk Loader
-
-Milica Gojak · Lena Perišić · Ljubica Mihailović · Andrej Čolić
-
-## What's next
-
-- **Gets smarter with every interview.** Predict how users will react to a new feature before it's built, then confirm it with just a handful of interviews. Teams stop spending months on features nobody uses.
-- **From chat to voice.** As AI voice keeps improving, interviews move from chat to real voice conversations.
-
----
-
-<p align="center"><b>Analytics tells you what. Because tells you why.</b></p>
